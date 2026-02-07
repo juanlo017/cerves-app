@@ -8,11 +8,85 @@ App multiplataforma (iOS / Android / Web) hecha con **Expo (React Native)** + **
 - Datos compartidos: **grupos (eventos) + scoreboard global**
 - Estilo: arcade / pixel
 
+---
+
+## 🧭 Roadmap
+
+### **Phase 1 — Core Features 🍺**
+The “it actually works” phase.
+
+#### ✅ Add Drink Logging
+- Screen to select a drink  
+- Button to log consumption  
+- Quick add from drink catalog  
+
+#### 📌 Personal Dashboard
+- Today’s drinks count  
+- Stats (liters, calories, € spent)  
+- Recent consumption history  
+
+#### 📚 Drink Catalog Management
+- Display available drinks by category  
+- Filter/search drinks  
+
+---
+
+### **Phase 2 — Tracking & History 📊**
+The “now we’re getting serious” phase.
+
+#### 🗓️ Calendar View
+- Show consumption by day  
+- Monthly overview  
+- Tap a day to see details  
+
+#### 📈 Statistics Screen
+- Charts / graphs  
+- Weekly/monthly trends  
+- Favorite drinks  
+
+---
+
+### **Phase 3 — Social Features 👥**
+The “bad influence” phase.
+
+#### 👥 Groups / Events
+- Create event with code  
+- Join event by code  
+- Track drinks during event  
+
+#### 🏆 Leaderboards
+- Event leaderboard  
+- Compare stats with friends  
+- Achievements / badges  
+
+---
+
+### **Phase 4 — Polish ✨**
+The “make it feel like a real app” phase.
+
+#### ⚙️ Settings
+- Edit profile  
+- Change avatar  
+- Reset data  
+- Dark mode  
+
+#### 🔔 Notifications
+- Daily reminders  
+- Health warnings  
+- Event invites  
+
+---
+
+## 🚀 Future Ideas (Optional)
+- Drink limits & smart alerts  
+- BAC estimation (optional + configurable)  
+- Export to CSV / PDF  
+- Widgets (iOS/Android)  
 
 ---
 
 
-## 1) Requisitos
+## 1) Requisitos para compilar
 
 
 - Node.js **LTS** (18 o 20)
@@ -38,7 +112,7 @@ Template con tabs:
 
 
 ```bash
-npx create-expo-app@latest beer-arcade --template tabs
+npx create-expo-app@latest cerves-app --template tabs
 cd beer-arcade
 ```
 
