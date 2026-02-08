@@ -21,29 +21,36 @@ The “it actually works” phase.
 - Quick add from drink catalog  
 
 #### 📌 Personal Dashboard
-- Today’s drinks count  
+- Current week’s drinks count  
 - Stats (liters, calories, € spent)  
 - Recent consumption history  
 
-#### 📚 Drink Catalog Management
-- Display available drinks by category  
-- Filter/search drinks  
-
----
-
-### **Phase 2 — Tracking & History 📊**
-The “now we’re getting serious” phase.
+#### 🏆 Leaderboards
+- Event leaderboard  
+- Compare stats with friends  
+- Achievements / badges  
 
 #### 🗓️ Calendar View
 - Show consumption by day  
 - Monthly overview  
-- Tap a day to see details  
+- Tap a day to see details 
+
+----
+### **RELEASE 1 🚀 **
+----
+
+### **Phase 2 — Tracking & History 📊**
+The “now we’re getting serious” phase.
 
 #### 📈 Statistics Screen
 - Charts / graphs  
 - Weekly/monthly trends  
 - Favorite drinks  
 
+#### 📈 Daily Resume Screen in Personal Dashboard
+- Charts / graphs  
+- Weekly/monthly trends  
+- Favorite drinks
 ---
 
 ### **Phase 3 — Social Features 👥**
@@ -53,11 +60,6 @@ The “bad influence” phase.
 - Create event with code  
 - Join event by code  
 - Track drinks during event  
-
-#### 🏆 Leaderboards
-- Event leaderboard  
-- Compare stats with friends  
-- Achievements / badges  
 
 ---
 
@@ -74,6 +76,10 @@ The “make it feel like a real app” phase.
 - Daily reminders  
 - Health warnings  
 - Event invites  
+
+#### 📚 Drink Catalog Management
+- Display available drinks by category  
+- Filter/search drinks  
 
 ---
 

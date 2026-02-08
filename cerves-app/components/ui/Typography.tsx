@@ -7,26 +7,30 @@ interface TypographyProps {
   color?: string;
   align?: 'left' | 'center' | 'right';
   style?: TextStyle;
+  numberOfLines?: number;
 }
 
 export function Typography({ 
-  children, 
-  variant = 'body', 
-  color = Theme.colors.text,
-  align = 'left',
-  style 
-}: TypographyProps) {
-  return (
-    <Text style={[
-      styles.base,
-      styles[variant],
-      { color, textAlign: align },
-      style
-    ]}>
-      {children}
-    </Text>
-  );
-}
+    children, 
+    variant = 'body', 
+    color = Theme.colors.text,
+    align = 'left',
+    style,
+    numberOfLines
+  }: TypographyProps) {
+    return (
+      <Text style={[
+        styles.base,
+        styles[variant],
+        { color, textAlign: align },
+        style
+      ]}
+        numberOfLines={numberOfLines} // ← Add this
+      >
+        {children}
+      </Text>
+    );  
+  }
 
 const styles = StyleSheet.create({
   base: {

@@ -3,7 +3,6 @@ import { Tabs } from 'expo-router';
 import { useColorScheme } from '@/components/useColorScheme';
 import { Theme } from '@/constants/Theme';
 
-
 export default function TabLayout() {
   const colorScheme = useColorScheme();
 
@@ -16,9 +15,9 @@ export default function TabLayout() {
           backgroundColor: Theme.colors.backgroundLight,
           borderTopColor: Theme.colors.border,
           borderTopWidth: 2,
-          height: 70, // ← Altura aumentada (default es ~50)
-          paddingBottom: 10, // ← Padding inferior
-          paddingTop: 10, // ← Padding superior
+          height: 70,
+          paddingBottom: 10,
+          paddingTop: 10,
         },
         tabBarLabelStyle: {
           fontSize: Theme.fontSize.sm,
@@ -31,14 +30,24 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'SEMANAL',
-          tabBarIcon: ({ color }) => <FontAwesome size={28} name="home" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="add"
+        options={{
+          title: 'AÑADIR',
+        }}
+      />
+      <Tabs.Screen
+        name="calendar"
+        options={{
+          title: 'CALENDARIO',
         }}
       />
       <Tabs.Screen
         name="scoreboard"
         options={{
           title: 'RANKING',
-          tabBarIcon: ({ color }) => <FontAwesome size={28} name="trophy" color={color} />,
         }}
       />
     </Tabs>

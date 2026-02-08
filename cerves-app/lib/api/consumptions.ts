@@ -8,6 +8,7 @@ export interface Consumption {
   consumed_at: string;
   day: string;
   group_id?: string | null;
+  eur_spent?: number | null; // ← Added
   created_at: string;
 }
 
@@ -18,7 +19,6 @@ export interface ConsumptionWithDrink extends Consumption {
     category: string;
     liters_per_unit: number;
     kcal_per_unit: number;
-    eur_per_unit: number;
   };
 }
 
@@ -39,8 +39,7 @@ export const consumptionsApi = {
           name,
           category,
           liters_per_unit,
-          kcal_per_unit,
-          eur_per_unit
+          kcal_per_unit
         )
       `)
       .eq('player_id', playerId);
@@ -83,8 +82,7 @@ export const consumptionsApi = {
           name,
           category,
           liters_per_unit,
-          kcal_per_unit,
-          eur_per_unit
+          kcal_per_unit
         )
       `)
       .eq('player_id', playerId)
@@ -121,8 +119,7 @@ export const consumptionsApi = {
           name,
           category,
           liters_per_unit,
-          kcal_per_unit,
-          eur_per_unit
+          kcal_per_unit
         )
       `)
       .eq('group_id', groupId)
@@ -140,36 +137,37 @@ export const consumptionsApi = {
    * Create a new consumption
    */
   async create(
-    playerId: string,
-    drinkId: string,
-    qty: number,
-    consumedAt?: string,
-    groupId?: string | null
-  ): Promise<Consumption> {
-    const timestamp = consumedAt || new Date().toISOString();
-    // day is auto-set by trigger, but we can include it for clarity
-    const day = timestamp.split('T')[0];
+      playerId: string,
+      drinkId: string,
+      qty: number,
+      eurSpent: number, // ← Added as required parameter
+      consumedAt?: string,
+      groupId?: string | null
+    ): Promise<Consumption> {
+      const timestamp = consumedAt || new Date().toISOString();
+      const day = timestamp.split('T')[0];
 
-    const { data, error } = await supabase
-      .from('consumptions')
-      .insert({
-        player_id: playerId,
-        drink_id: drinkId,
-        qty,
-        consumed_at: timestamp,
-        day, // Optional: trigger will set this anyway
-        group_id: groupId || null,
-      })
-      .select()
-      .single();
+      const { data, error } = await supabase
+        .from('consumptions')
+        .insert({
+          player_id: playerId,
+          drink_id: drinkId,
+          qty,
+          eur_spent: eurSpent, // ← Added
+          consumed_at: timestamp,
+          day,
+          group_id: groupId || null,
+        })
+        .select()
+        .single();
 
-    if (error) {
-      console.error('Error creating consumption:', error);
-      throw new Error('Failed to create consumption');
-    }
+      if (error) {
+        console.error('Error creating consumption:', error);
+        throw new Error('Failed to create consumption');
+      }
 
-    return data;
-  },
+      return data;
+    },
 
   /**
    * Update a consumption
@@ -212,51 +210,51 @@ export const consumptionsApi = {
    * Get player stats (total drinks, liters, calories, euros spent)
    */
   async getPlayerStats(playerId: string, groupId?: string | null) {
-    let query = supabase
-      .from('consumptions')
-      .select(`
-        qty,
-        drinks (
-          liters_per_unit,
-          kcal_per_unit,
-          eur_per_unit
-        )
-      `)
-      .eq('player_id', playerId);
+      let query = supabase
+        .from('consumptions')
+        .select(`
+          qty,
+          eur_spent,
+          drinks (
+            liters_per_unit,
+            kcal_per_unit
+          )
+        `)
+        .eq('player_id', playerId);
 
-    if (groupId !== undefined) {
-      if (groupId === null) {
-        query = query.is('group_id', null);
-      } else {
-        query = query.eq('group_id', groupId);
+      if (groupId !== undefined) {
+        if (groupId === null) {
+          query = query.is('group_id', null);
+        } else {
+          query = query.eq('group_id', groupId);
+        }
       }
-    }
 
-    const { data, error } = await query;
+      const { data, error } = await query;
 
-    if (error) {
-      console.error('Error fetching player stats:', error);
-      return {
-        totalDrinks: 0,
-        totalLiters: 0,
-        totalCalories: 0,
-        totalSpent: 0,
-      };
-    }
-
-    const stats = data.reduce(
-      (acc, consumption: any) => {
-        const drink = consumption.drinks;
+      if (error) {
+        console.error('Error fetching player stats:', error);
         return {
-          totalDrinks: acc.totalDrinks + consumption.qty,
-          totalLiters: acc.totalLiters + (consumption.qty * drink.liters_per_unit),
-          totalCalories: acc.totalCalories + (consumption.qty * drink.kcal_per_unit),
-          totalSpent: acc.totalSpent + (consumption.qty * drink.eur_per_unit),
+          totalDrinks: 0,
+          totalLiters: 0,
+          totalCalories: 0,
+          totalSpent: 0,
         };
-      },
-      { totalDrinks: 0, totalLiters: 0, totalCalories: 0, totalSpent: 0 }
-    );
+      }
 
-    return stats;
-  },
+      const stats = data.reduce(
+        (acc, consumption: any) => {
+          const drink = consumption.drinks;
+          return {
+            totalDrinks: acc.totalDrinks + consumption.qty,
+            totalLiters: acc.totalLiters + (consumption.qty * drink.liters_per_unit),
+            totalCalories: acc.totalCalories + (consumption.qty * drink.kcal_per_unit),
+            totalSpent: acc.totalSpent + (consumption.eur_spent || 0), // ← Changed
+          };
+        },
+        { totalDrinks: 0, totalLiters: 0, totalCalories: 0, totalSpent: 0 }
+      );
+
+      return stats;
+    },
 };
