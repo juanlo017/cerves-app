@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { StyleSheet, View, ScrollView, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { weeklyApi, type WeeklyStats } from '@/lib/api';
 import { Card, ProgressBar, IconButton, GlassDay, StatItem, Typography } from '@/components/ui';
@@ -39,9 +40,11 @@ export default function HomeScreen() {
 
   if (!player || isLoading || !weeklyData) {
     return (
-      <View style={styles.loadingContainer}>
-        <Typography variant="body">Cargando...</Typography>
-      </View>
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={styles.loadingContainer}>
+          <Typography variant="body">Cargando...</Typography>
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -49,123 +52,138 @@ export default function HomeScreen() {
   const today = new Date().toISOString().split('T')[0];
 
   return (
-    <ScrollView style={styles.container}>
-      {/* Week Navigator */}
-      <View style={styles.weekNavigator}>
-        <IconButton onPress={goToPreviousWeek} icon="◀" />
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScrollView>
+        {/* Week Navigator */}
+        <View style={styles.weekNavigator}>
+          <IconButton onPress={goToPreviousWeek} icon="◀" />
 
-        <View style={styles.weekRangeContainer}>
-          <Typography variant="h3" align="center">
-            {weeklyData.weekRange.display}
-          </Typography>
-          {!isCurrentWeek && (
-            <TouchableOpacity onPress={goToCurrentWeek} style={styles.todayButton}>
-              <Typography variant="caption" color={Theme.colors.background}>
-                📍 HOY
-              </Typography>
-            </TouchableOpacity>
-          )}
-        </View>
-
-        <IconButton 
-          onPress={goToNextWeek} 
-          icon="▶"
-          disabled={weekOffset >= 0}
-        />
-      </View>
-
-      {/* Weekly Goal */}
-      <Card variant="highlight">
-        <Typography variant="h2" align="center" color={Theme.colors.primary}>
-          {player.display_name}
-        </Typography>
-        
-        <Typography variant="h3" align="center" style={{ marginTop: Theme.spacing.sm }}>
-          OBJETIVO SEMANAL
-        </Typography>
-
-        <View style={{ marginTop: Theme.spacing.md }}>
-          <ProgressBar
-            current={weeklyData.currentProgress}
-            goal={weeklyData.weeklyGoal}
-          />
-        </View>
-      </Card>
-
-      {/* Weekly Glass Grid */}
-      <Card>
-        <Typography variant="h3" align="center">
-          🍺 RACHA SEMANAL 🍺
-        </Typography>
-
-        <View style={styles.glassGrid}>
-          {weeklyData.dailyConsumption.map((day) => (
-            <GlassDay
-              key={day.date}
-              dayShort={day.dayShort}
-              liters={day.liters}
-              fillState={day.fillState}
-              isToday={day.date === today}
-            />
-          ))}
-        </View>
-      </Card>
-
-      {/* Quick Stats */}
-      <Card>
-        <View style={styles.statsGrid}>
-          <StatItem 
-            icon="🍺" 
-            value={weeklyData.weekStats.totalDrinks}
-            label="bebidas"
-          />
-          <StatItem 
-            icon="💰" 
-            value={`${weeklyData.weekStats.totalSpent.toFixed(2)}€`}
-            label="gastado"
-          />
-          <StatItem 
-            icon="🔥" 
-            value={weeklyData.weekStats.totalCalories}
-            label="kcal"
-          />
-        </View>
-      </Card>
-
-      {/* Streak */}
-      <Card variant="dark" style={styles.streakCard}>
-        <View style={styles.streakContent}>
-          <Typography variant="h1">👍</Typography>
-          <View style={{ marginLeft: Theme.spacing.md }}>
-            <Typography variant="h2" color={Theme.colors.success}>
-              {weeklyData.streak}
+          <View style={styles.weekRangeContainer}>
+            <Typography variant="h3" align="center">
+              {weeklyData.weekRange.display}
             </Typography>
-            <Typography variant="body" color={Theme.colors.textSecondary}>
-              días consecutivos
-            </Typography>
+            {!isCurrentWeek && (
+              <TouchableOpacity onPress={goToCurrentWeek} style={styles.todayButton}>
+                <Typography 
+                  variant="caption" 
+                  color={Theme.colors.background}
+                  style={styles.todayButtonText}
+                >
+                  Semana actual
+                </Typography>
+              </TouchableOpacity>
+            )}
           </View>
+
+          <IconButton 
+            onPress={goToNextWeek} 
+            icon="▶"
+            disabled={weekOffset >= 0}
+          />
         </View>
-      </Card>
 
-      {/* Favorite Drink */}
-      {weeklyData.weekStats.favoriteDrink && (
-        <Card style={styles.favoriteCard}>
-          <Typography variant="caption" align="center">
-            Favorita esta semana:
+        {/* Weekly Goal */}
+        <Card variant="highlight">
+          <Typography variant="h2" align="center" color={Theme.colors.primary}>
+            {player.display_name}
           </Typography>
-          <Typography 
-            variant="h3" 
-            align="center" 
-            color={Theme.colors.secondary}
-            style={{ marginTop: Theme.spacing.xs }}
-          >
-            {weeklyData.weekStats.favoriteDrink}
+          
+          <Typography variant="h3" align="center" style={{ marginTop: Theme.spacing.sm }}>
+            OBJETIVO SEMANAL
           </Typography>
+
+          <View style={{ marginTop: Theme.spacing.md }}>
+            <ProgressBar
+              current={weeklyData.currentProgress}
+              goal={weeklyData.weeklyGoal}
+            />
+          </View>
         </Card>
-      )}
 
-      <View style={{ height: Theme.spacing.xl }} />
-    </ScrollView>
+        {/* Weekly Glass Grid */}
+        <Card>
+          <Typography variant="h3" align="center">
+            RACHA SEMANAL
+          </Typography>
+
+          <View style={styles.glassGrid}>
+            {weeklyData.dailyConsumption.map((day) => (
+              <GlassDay
+                key={day.date}
+                dayShort={day.dayShort}
+                liters={day.liters}
+                fillState={day.fillState}
+                isToday={day.date === today}
+              />
+            ))}
+          </View>
+        </Card>
+
+        {/* Streak */}
+          <Card 
+            variant="dark" 
+            style={{
+              backgroundColor: weeklyData.streak > 0 ? Theme.colors.streakBackgroundCard : Theme.colors.backgroundCard,
+              borderColor: weeklyData.streak > 0 ? Theme.colors.streakBorder : Theme.colors.primary,
+              borderWidth: 3,
+            }}
+          >
+          <View style={styles.streakContent}>
+            <Typography variant="h1">
+              {weeklyData.streak > 0 ? '🔥' : '🧊'}
+            </Typography>
+            <View style={{ marginLeft: Theme.spacing.md }}>
+              <Typography 
+                variant="h2" 
+                color={weeklyData.streak > 0 ? Theme.colors.text : Theme.colors.info}
+              >
+                {weeklyData.streak} días
+              </Typography>
+            </View>
+          </View>
+        </Card>
+
+        {/* Quick Stats */}
+        <Card>
+          <View style={styles.statsGrid}>
+            <StatItem 
+              icon="🍺" 
+              value={weeklyData.weekStats.totalDrinks}
+              label="bebidas"
+            />
+            <StatItem 
+              icon="💰" 
+              value={`${weeklyData.weekStats.totalSpent.toFixed(2)}€`}
+              label="gastado"
+            />
+            <StatItem 
+              icon="⚡" 
+              value={weeklyData.weekStats.totalCalories}
+              label="kcal"
+            />
+          </View>
+        </Card>
+
+        {/* Favorite Drink */}
+        {weeklyData.weekStats.favoriteDrink && (
+          <Card style={styles.favoriteCard}>
+            <Typography variant="caption" align="center">
+              Favorita esta semana:
+            </Typography>
+            <Typography 
+              variant="h3" 
+              align="center" 
+              color={Theme.colors.secondary}
+              style={{ marginTop: Theme.spacing.xs }}
+            >
+              {weeklyData.weekStats.favoriteDrink}
+            </Typography>
+          </Card>
+        )}
+
+        <View style={{ height: Theme.spacing.xl }} />
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -178,7 +196,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Theme.colors.background,
   },
   
   // Week Navigator
@@ -197,11 +214,15 @@ const styles = StyleSheet.create({
     marginHorizontal: Theme.spacing.md,
   },
   todayButton: {
-    marginTop: Theme.spacing.xs,
+    marginTop: Theme.spacing.sm,
     paddingHorizontal: Theme.spacing.md,
-    paddingVertical: Theme.spacing.xs,
+    paddingVertical: Theme.spacing.sm,
     backgroundColor: Theme.colors.secondary,
     borderRadius: Theme.borderRadius.lg,
+  },
+  todayButtonText: {
+    fontFamily: Theme.fonts.pixel,
+    fontSize: 10,
   },
 
   // Glass Grid
@@ -220,8 +241,7 @@ const styles = StyleSheet.create({
 
   // Streak Card
   streakCard: {
-    backgroundColor: Theme.colors.success,
-    borderColor: Theme.colors.success,
+    backgroundColor: Theme.colors.streakBackgroundCard, // Mismo que otros cards
   },
   streakContent: {
     flexDirection: 'row',

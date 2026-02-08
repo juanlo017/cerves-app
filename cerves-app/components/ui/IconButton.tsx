@@ -44,6 +44,7 @@ const styles = StyleSheet.create({
   icon: {
     fontSize: Theme.fontSize.xl,
     color: Theme.colors.text,
+    fontFamily: Theme.fonts.pixel, // ← Añadido
   },
   iconDisabled: {
     color: Theme.colors.textMuted,

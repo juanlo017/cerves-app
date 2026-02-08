@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { Theme } from '@/constants/Theme';
 
 type FillState = 'empty' | 'quarter' | 'half' | 'full' | 'overflow';
@@ -10,6 +10,15 @@ interface GlassDayProps {
   isToday?: boolean;
 }
 
+// Mapeo de estados a imágenes
+const glassImages = {
+  empty: require('@/assets/images/secuenciaCerveza/secuenciaCerveza0.png'),
+  quarter: require('@/assets/images/secuenciaCerveza/secuenciaCerveza1.png'),
+  half: require('@/assets/images/secuenciaCerveza/secuenciaCerveza2.png'),
+  full: require('@/assets/images/secuenciaCerveza/secuenciaCerveza3.png'),
+  overflow: require('@/assets/images/secuenciaCerveza/secuenciaCerveza3.png'), // Desbordando usa la misma que full
+};
+
 export function GlassDay({ dayShort, liters, fillState, isToday }: GlassDayProps) {
   return (
     <View style={styles.container}>
@@ -17,10 +26,13 @@ export function GlassDay({ dayShort, liters, fillState, isToday }: GlassDayProps
       
       <View style={[
         styles.glass,
-        styles[`glass_${fillState}`],
-        isToday && styles.glassToday
-      ]}>
-        <Text style={styles.icon}>🍺</Text>
+        isToday ? styles.glassToday : { borderColor: Theme.colors.border, borderWidth: 2 }
+        ]}>
+        <Image 
+          source={glassImages[fillState]} 
+          style={styles.glassImage}
+          resizeMode="contain"
+        />
       </View>
       
       <Text style={styles.litersText}>
@@ -40,6 +52,7 @@ const styles = StyleSheet.create({
     fontWeight: Theme.fontWeight.bold,
     color: Theme.colors.textSecondary,
     marginBottom: Theme.spacing.sm,
+    fontFamily: Theme.fonts.pixel,
   },
   glass: {
     width: 40,
@@ -49,36 +62,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: Theme.spacing.xs,
     borderWidth: 2,
-  },
-  glassToday: {
+    borderColor: Theme.colors.border,
+    backgroundColor: 'transparent',
+    },
+    glassToday: {
     borderColor: Theme.colors.secondary,
     borderWidth: 3,
-  },
-  glass_empty: {
-    backgroundColor: Theme.colors.glassEmpty,
-    borderColor: Theme.colors.border,
-  },
-  glass_quarter: {
-    backgroundColor: Theme.colors.glassQuarter,
-    borderColor: Theme.colors.primary,
-  },
-  glass_half: {
-    backgroundColor: Theme.colors.glassHalf,
-    borderColor: Theme.colors.primary,
-  },
-  glass_full: {
-    backgroundColor: Theme.colors.glassFull,
-    borderColor: Theme.colors.primaryDark,
-  },
-  glass_overflow: {
-    backgroundColor: Theme.colors.glassOverflow,
-    borderColor: Theme.colors.error,
-  },
-  icon: {
-    fontSize: 24,
+    },
+  glassImage: {
+    width: 36,
+    height: 56,
   },
   litersText: {
     fontSize: Theme.fontSize.xs,
     color: Theme.colors.textSecondary,
+    fontFamily: Theme.fonts.mono,
   },
 });

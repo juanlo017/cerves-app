@@ -52,6 +52,7 @@ const styles = StyleSheet.create({
     color: Theme.colors.primary,
     textAlign: 'center',
     marginBottom: Theme.spacing.sm,
+    fontFamily: Theme.fonts.mono, // ← Añadido
   },
   barContainer: {
     width: '100%',
@@ -70,5 +71,6 @@ const styles = StyleSheet.create({
     color: Theme.colors.textSecondary,
     textAlign: 'center',
     marginTop: Theme.spacing.sm,
+    fontFamily: Theme.fonts.mono, // ← Añadido
   },
 });

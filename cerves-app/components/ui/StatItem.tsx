@@ -30,10 +30,12 @@ const styles = StyleSheet.create({
     fontSize: Theme.fontSize.lg,
     fontWeight: Theme.fontWeight.bold,
     color: Theme.colors.text,
+    fontFamily: Theme.fonts.mono, // ← Añadido
   },
   label: {
     fontSize: Theme.fontSize.xs,
     color: Theme.colors.textSecondary,
     marginTop: Theme.spacing.xs,
+    fontFamily: Theme.fonts.system, // ← Añadido
   },
 });

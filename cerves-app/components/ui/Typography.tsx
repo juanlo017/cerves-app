@@ -31,36 +31,31 @@ export function Typography({
 const styles = StyleSheet.create({
   base: {
     color: Theme.colors.text,
+    fontFamily: Theme.fonts.pixel, // ← TODO usa pixel
   },
   h1: {
     fontSize: Theme.fontSize.xxxl,
     fontWeight: Theme.fontWeight.bold,
-    fontFamily: Theme.fonts.pixel, // Pixel font for big headings
   },
   h2: {
     fontSize: Theme.fontSize.xxl,
     fontWeight: Theme.fontWeight.bold,
-    fontFamily: Theme.fonts.pixel,
   },
   h3: {
     fontSize: Theme.fontSize.xl,
     fontWeight: Theme.fontWeight.semibold,
-    fontFamily: Theme.fonts.pixel,
   },
   body: {
     fontSize: Theme.fontSize.base,
     fontWeight: Theme.fontWeight.normal,
-    fontFamily: Theme.fonts.system, // System for readability
   },
   caption: {
     fontSize: Theme.fontSize.sm,
     fontWeight: Theme.fontWeight.normal,
     color: Theme.colors.textSecondary,
-    fontFamily: Theme.fonts.system,
   },
   label: {
     fontSize: Theme.fontSize.sm,
     fontWeight: Theme.fontWeight.semibold,
-    fontFamily: Theme.fonts.mono, // Monospace for labels/stats
   },
 });

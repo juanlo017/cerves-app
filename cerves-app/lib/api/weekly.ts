@@ -52,7 +52,7 @@ export const weeklyApi = {
         display: formatWeekRange(weekStart, weekEnd),
       },
       weeklyGoal: 8.0,
-      currentProgress: 1.7,
+      currentProgress: 7.0,
       percentageComplete: 21,
       
       dailyConsumption: [
@@ -78,7 +78,7 @@ export const weeklyApi = {
           date: '2024-02-07',
           liters: 0,
           drinks: 0,
-          fillState: 'empty',
+          fillState: 'quarter',
         },
         {
           day: 'Thursday',
