@@ -39,6 +39,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="calendar"
+        options={{
+          title: 'CALENDARIO',
+        }}
+      />
+      <Tabs.Screen
         name="scoreboard"
         options={{
           title: 'RANKING',

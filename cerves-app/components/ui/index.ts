@@ -7,3 +7,7 @@ export { Typography } from './Typography';
 export { CategoryCard } from './CategoryCard';
 export { DrinkItem } from './DrinkItem';
 export { QuantitySelector } from './QuantitySelector';
+export { LeaderboardItem } from './LeaderboardItem';
+export { SegmentedControl } from './SegmentedControl';
+export { CalendarDay } from './CalendarDay';
+export { MonthNavigator } from './MonthNavigator';
