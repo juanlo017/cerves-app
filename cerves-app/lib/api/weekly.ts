@@ -54,13 +54,6 @@ export interface DailyConsumption {
     };
   }
 
-  export interface LeaderboardPlayer {
-    player_id: string;
-    player_name: string;
-    avatar: string;
-    total_liters: number;
-    trend: 'up' | 'down' | 'same';
-  }
 
 export const weeklyApi = {
   /**
@@ -348,143 +341,7 @@ export const weeklyApi = {
   canGoToNextMonth(monthOffset: number): boolean {
     return monthOffset < 0;
   },
-
-  /**
-  * Get global leaderboard with trend calculation
-  */
-  async getGlobalLeaderboard(): Promise<LeaderboardPlayer[]> {
-    // Get current week boundaries
-    const currentWeekStart = formatDate(getWeekStart(new Date(), 0));
-    const currentWeekEnd = formatDate(getWeekEnd(getWeekStart(new Date(), 0)));
-    
-    // Get last week boundaries for trend
-    const lastWeekStart = formatDate(getWeekStart(new Date(), -1));
-    const lastWeekEnd = formatDate(getWeekEnd(getWeekStart(new Date(), -1)));
-
-    // Fetch current week consumptions grouped by player
-    const { data: currentWeekData, error: currentError } = await supabase
-      .from('consumptions')
-      .select(`
-        player_id,
-        qty,
-        drinks (
-          liters_per_unit
-        ),
-        players (
-          display_name,
-          avatar_key
-        )
-      `)
-      .gte('day', currentWeekStart)
-      .lte('day', currentWeekEnd)
-      .is('group_id', null);
-
-    if (currentError) {
-      console.error('Error fetching current week leaderboard:', currentError);
-      return [];
-    }
-
-    // Fetch last week consumptions for trend calculation
-    const { data: lastWeekData, error: lastError } = await supabase
-      .from('consumptions')
-      .select(`
-        player_id,
-        qty,
-        drinks (
-          liters_per_unit
-        )
-      `)
-      .gte('day', lastWeekStart)
-      .lte('day', lastWeekEnd)
-      .is('group_id', null);
-
-    if (lastError) {
-      console.error('Error fetching last week data:', lastError);
-    }
-
-    // Calculate current week totals per player
-    const currentWeekMap = new Map<string, { name: string; avatar: string; liters: number }>();
-    
-    currentWeekData?.forEach((c: any) => {
-      const drink = c.drinks;
-      const player = c.players;
-      const liters = c.qty * drink.liters_per_unit;
-      
-      const current = currentWeekMap.get(c.player_id) || { 
-        name: player?.display_name || 'Unknown',
-        avatar: player?.avatar_key || '🍺',
-        liters: 0 
-      };
-      
-      currentWeekMap.set(c.player_id, {
-        name: current.name,
-        avatar: current.avatar,
-        liters: current.liters + liters,
-      });
-    });
-
-    // Calculate last week totals per player
-    const lastWeekMap = new Map<string, number>();
-    
-    lastWeekData?.forEach((c: any) => {
-      const drink = c.drinks;
-      const liters = c.qty * drink.liters_per_unit;
-      
-      lastWeekMap.set(c.player_id, (lastWeekMap.get(c.player_id) || 0) + liters);
-    });
-
-    // Build leaderboard with rankings
-    const leaderboard: LeaderboardPlayer[] = [];
-    
-    currentWeekMap.forEach((data, playerId) => {
-      leaderboard.push({
-        player_id: playerId,
-        player_name: data.name,
-        avatar: data.avatar,
-        total_liters: data.liters,
-        trend: 'same', // We'll calculate this next
-      });
-    });
-
-    // Sort by total liters (descending)
-    leaderboard.sort((a, b) => b.total_liters - a.total_liters);
-
-    // Calculate trends based on rank changes
-    const lastWeekRankings = Array.from(lastWeekMap.entries())
-      .sort((a, b) => b[1] - a[1])
-      .reduce((acc, [playerId], index) => {
-        acc.set(playerId, index + 1);
-        return acc;
-      }, new Map<string, number>());
-
-    leaderboard.forEach((player, currentRank) => {
-      const lastRank = lastWeekRankings.get(player.player_id);
-      
-      if (!lastRank) {
-        // New player this week
-        player.trend = 'same';
-      } else if (currentRank + 1 < lastRank) {
-        // Moved up in rankings (lower rank number = better)
-        player.trend = 'up';
-      } else if (currentRank + 1 > lastRank) {
-        // Moved down in rankings
-        player.trend = 'down';
-      } else {
-        // Same rank
-        player.trend = 'same';
-      }
-    });
-
-    return leaderboard;
-  },
-
-  /**
-   * Get event/group leaderboard
-   */
-  async getEventLeaderboard(groupId: string): Promise<LeaderboardPlayer[]> {
-    // TODO: Implement when events are ready
-    return [];
-  },
+  
 
   //Actualizamos los dashboards y leaderboards todos los LUNES
   async getLastUpdateDate(): Promise<string> {
@@ -497,7 +354,6 @@ export const weeklyApi = {
     
     return lastMonday.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
   }
-
 
 };
 
