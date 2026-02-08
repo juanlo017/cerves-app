@@ -3,9 +3,9 @@ import { StyleSheet, View, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
-import { drinksApi } from '@/lib/api';
 import { DrinkItem, Typography, IconButton } from '@/components/ui';
 import { Theme } from '@/constants/Theme';
+
 
 export default function CategoryDrinksScreen() {
   const { category } = useLocalSearchParams<{ category: string }>();
@@ -36,7 +36,7 @@ export default function CategoryDrinksScreen() {
                 { id: '5', name: 'Blanco Copa', liters_per_unit: 0.15, kcal_per_unit: 121 },
                 { id: '6', name: 'Rosado Copa', liters_per_unit: 0.15, kcal_per_unit: 120 },
             ],
-            elixires: [
+            alta_graduación: [
                 { id: '7', name: 'Gin Tonic', liters_per_unit: 0.25, kcal_per_unit: 200 },
                 { id: '8', name: 'Mojito', liters_per_unit: 0.30, kcal_per_unit: 217 },
                 { id: '9', name: 'Margarita', liters_per_unit: 0.20, kcal_per_unit: 168 },
@@ -63,7 +63,7 @@ export default function CategoryDrinksScreen() {
   };
 
   const getCategoryIcon = () => {
-    const icons = { cerveza: '🍺', vino: '🍷', elixires: '🍸' };
+    const icons = { cerveza: '🍺', vino: '🍷', alta_graduación: '🍸' };
     return icons[category as keyof typeof icons] || '🍺';
   };
 

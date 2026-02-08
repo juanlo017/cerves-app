@@ -157,18 +157,16 @@ const styles = StyleSheet.create({
   },
   weekdayRow: {
     flexDirection: 'row',
-    marginBottom: Theme.spacing.xs,
-    paddingHorizontal: Theme.spacing.xs,
+    marginBottom: Theme.spacing.sm,
   },
   weekdayCell: {
-    flex: 1,
+    width: '14.28%', // Match calendar cells
     alignItems: 'center',
     paddingVertical: Theme.spacing.xs,
   },
   calendarGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    padding: Theme.spacing.xs,
   },
   statsGrid: {
     flexDirection: 'row',

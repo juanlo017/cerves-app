@@ -57,6 +57,7 @@ function RootLayoutNav() {
           }} 
         />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="drinks" options={{ headerShown: false }} />
       </Stack>
     </ThemeProvider>
   );

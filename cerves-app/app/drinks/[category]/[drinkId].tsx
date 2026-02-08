@@ -8,6 +8,7 @@ import { Card, Typography, IconButton, QuantitySelector } from '@/components/ui'
 import { Theme } from '@/constants/Theme';
 import { TouchableOpacity } from 'react-native';
 
+
 export default function AddConsumptionScreen() {
   const { category, drinkId } = useLocalSearchParams<{ category: string; drinkId: string }>();
   

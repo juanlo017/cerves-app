@@ -9,7 +9,7 @@ import { Theme } from '@/constants/Theme';
 const CATEGORIES = [
   { id: 'cerveza', name: 'CERVEZA', icon: '🍺' },
   { id: 'vino', name: 'VINO', icon: '🍷' },
-  { id: 'elixires', name: 'ELIXIRES', icon: '🍸' },
+  { id: 'alta_graduación', name: 'ALTA GRADUACIÓN', icon: '🍸' },
 ];
 
 export default function AddDrinkScreen() {

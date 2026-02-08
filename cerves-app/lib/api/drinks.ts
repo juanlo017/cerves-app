@@ -67,10 +67,10 @@ export const drinksApi = {
         { id: '5', name: 'Blanco Copa', category: 'vino', liters_per_unit: 0.15, kcal_per_unit: 121, is_active: true, created_at: '' },
         { id: '6', name: 'Rosado Copa', category: 'vino', liters_per_unit: 0.15, kcal_per_unit: 120, is_active: true, created_at: '' },
       ],
-      elixires: [
-        { id: '7', name: 'Gin Tonic', category: 'elixires', liters_per_unit: 0.25, kcal_per_unit: 200, is_active: true, created_at: '' },
-        { id: '8', name: 'Mojito', category: 'elixires', liters_per_unit: 0.30, kcal_per_unit: 217, is_active: true, created_at: '' },
-        { id: '9', name: 'Margarita', category: 'elixires', liters_per_unit: 0.20, kcal_per_unit: 168, is_active: true, created_at: '' },
+      alta_graduación: [
+        { id: '7', name: 'Gin Tonic', category: 'alta_graduación', liters_per_unit: 0.25, kcal_per_unit: 200, is_active: true, created_at: '' },
+        { id: '8', name: 'Mojito', category: 'alta_graduación', liters_per_unit: 0.30, kcal_per_unit: 217, is_active: true, created_at: '' },
+        { id: '9', name: 'Margarita', category: 'alta_graduación', liters_per_unit: 0.20, kcal_per_unit: 168, is_active: true, created_at: '' },
       ],
     };
     
