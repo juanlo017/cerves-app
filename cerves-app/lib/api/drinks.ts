@@ -47,38 +47,20 @@ export const drinksApi = {
   },
 
   async getByCategory(category: string): Promise<Drink[]> {
-    // TODO: Replace with real Supabase query
-    // const { data, error } = await supabase
-    //   .from('drinks')
-    //   .select('*')
-    //   .eq('category', category)
-    //   .eq('is_active', true)
-    //   .order('name');
-    
-    // Dummy data for now
-    const allDrinks = {
-      cerveza: [
-        { id: '1', name: 'Estrella Galicia', category: 'cerveza', liters_per_unit: 0.33, kcal_per_unit: 142, is_active: true, created_at: '' },
-        { id: '2', name: 'Mahou', category: 'cerveza', liters_per_unit: 0.33, kcal_per_unit: 139, is_active: true, created_at: '' },
-        { id: '3', name: 'Cruzcampo', category: 'cerveza', liters_per_unit: 0.33, kcal_per_unit: 140, is_active: true, created_at: '' },
-      ],
-      vino: [
-        { id: '4', name: 'Tinto Copa', category: 'vino', liters_per_unit: 0.15, kcal_per_unit: 125, is_active: true, created_at: '' },
-        { id: '5', name: 'Blanco Copa', category: 'vino', liters_per_unit: 0.15, kcal_per_unit: 121, is_active: true, created_at: '' },
-        { id: '6', name: 'Rosado Copa', category: 'vino', liters_per_unit: 0.15, kcal_per_unit: 120, is_active: true, created_at: '' },
-      ],
-      alta_graduación: [
-        { id: '7', name: 'Gin Tonic', category: 'alta_graduación', liters_per_unit: 0.25, kcal_per_unit: 200, is_active: true, created_at: '' },
-        { id: '8', name: 'Mojito', category: 'alta_graduación', liters_per_unit: 0.30, kcal_per_unit: 217, is_active: true, created_at: '' },
-        { id: '9', name: 'Margarita', category: 'alta_graduación', liters_per_unit: 0.20, kcal_per_unit: 168, is_active: true, created_at: '' },
-      ],
-    };
-    
-    return allDrinks[category.toLowerCase() as keyof typeof allDrinks] || [];
+    const { data, error } = await supabase
+      .from('drinks')
+      .select('*')
+      .eq('category', category)
+      .eq('is_active', true)
+      .order('name');
+
+    if (error) {
+      console.error('Error fetching drinks by category:', error);
+      return [];
+    }
+
+    return data || [];
   },
-
-
-
 
   /**
    * Get drink by ID

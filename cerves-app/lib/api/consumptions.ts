@@ -137,37 +137,37 @@ export const consumptionsApi = {
    * Create a new consumption
    */
   async create(
-      playerId: string,
-      drinkId: string,
-      qty: number,
-      eurSpent: number, // ← Added as required parameter
-      consumedAt?: string,
-      groupId?: string | null
-    ): Promise<Consumption> {
-      const timestamp = consumedAt || new Date().toISOString();
-      const day = timestamp.split('T')[0];
+    playerId: string,
+    drinkId: string,
+    qty: number,
+    eurSpent: number,
+    consumedAt?: string,
+    groupId?: string | null
+  ): Promise<Consumption> {
+    const timestamp = consumedAt || new Date().toISOString();
+    const day = timestamp.split('T')[0];
 
-      const { data, error } = await supabase
-        .from('consumptions')
-        .insert({
-          player_id: playerId,
-          drink_id: drinkId,
-          qty,
-          eur_spent: eurSpent, // ← Added
-          consumed_at: timestamp,
-          day,
-          group_id: groupId || null,
-        })
-        .select()
-        .single();
+    const { data, error } = await supabase
+      .from('consumptions')
+      .insert({
+        player_id: playerId,
+        drink_id: drinkId,
+        qty,
+        eur_spent: eurSpent,
+        consumed_at: timestamp,
+        day,
+        group_id: groupId || null,
+      })
+      .select()
+      .single();
 
-      if (error) {
-        console.error('Error creating consumption:', error);
-        throw new Error('Failed to create consumption');
-      }
+    if (error) {
+      console.error('Error creating consumption:', error);
+      throw new Error('Failed to create consumption');
+    }
 
-      return data;
-    },
+    return data;
+  },
 
   /**
    * Update a consumption

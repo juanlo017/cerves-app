@@ -5,6 +5,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { DrinkItem, Typography, IconButton } from '@/components/ui';
 import { Theme } from '@/constants/Theme';
+import { drinksApi } from '@/lib/api';
 
 
 export default function CategoryDrinksScreen() {
@@ -22,33 +23,15 @@ export default function CategoryDrinksScreen() {
   }, [category]);
 
     const loadDrinks = async () => {
-        try {
-            setIsLoading(true);
-            
-            const dummyDrinks = {
-            cerveza: [
-                { id: '1', name: 'Estrella Galicia', liters_per_unit: 0.33, kcal_per_unit: 142 },
-                { id: '2', name: 'Mahou', liters_per_unit: 0.33, kcal_per_unit: 139 },
-                { id: '3', name: 'Cruzcampo', liters_per_unit: 0.33, kcal_per_unit: 140 },
-            ],
-            vino: [
-                { id: '4', name: 'Tinto Copa', liters_per_unit: 0.15, kcal_per_unit: 125 },
-                { id: '5', name: 'Blanco Copa', liters_per_unit: 0.15, kcal_per_unit: 121 },
-                { id: '6', name: 'Rosado Copa', liters_per_unit: 0.15, kcal_per_unit: 120 },
-            ],
-            alta_graduación: [
-                { id: '7', name: 'Gin Tonic', liters_per_unit: 0.25, kcal_per_unit: 200 },
-                { id: '8', name: 'Mojito', liters_per_unit: 0.30, kcal_per_unit: 217 },
-                { id: '9', name: 'Margarita', liters_per_unit: 0.20, kcal_per_unit: 168 },
-            ],
-            };
-            
-            setDrinks(dummyDrinks[category as keyof typeof dummyDrinks] || []);
-        } catch (error) {
-            console.error('Error loading drinks:', error);
-        } finally {
-            setIsLoading(false);
-        }
+      try {
+        setIsLoading(true);
+        const data = await drinksApi.getByCategory(category);
+        setDrinks(data);
+      } catch (error) {
+        console.error('Error loading drinks:', error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
   const handleDrinkPress = (drinkId: string) => {

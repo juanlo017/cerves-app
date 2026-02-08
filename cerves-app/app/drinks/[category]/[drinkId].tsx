@@ -3,7 +3,7 @@ import { StyleSheet, View, ScrollView, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
-import { consumptionsApi } from '@/lib/api';
+import { consumptionsApi, drinksApi } from '@/lib/api';
 import { Card, Typography, IconButton, QuantitySelector } from '@/components/ui';
 import { Theme } from '@/constants/Theme';
 import { TouchableOpacity } from 'react-native';
@@ -27,20 +27,10 @@ export default function AddConsumptionScreen() {
   }, [drinkId]);
 
   const loadDrink = async () => {
-    const allDrinks = [
-      { id: '1', name: 'Estrella Galicia', liters_per_unit: 0.33, kcal_per_unit: 142 },
-      { id: '2', name: 'Mahou', liters_per_unit: 0.33, kcal_per_unit: 139 },
-      { id: '3', name: 'Cruzcampo', liters_per_unit: 0.33, kcal_per_unit: 140 },
-      { id: '4', name: 'Tinto Copa', liters_per_unit: 0.15, kcal_per_unit: 125 },
-      { id: '5', name: 'Blanco Copa', liters_per_unit: 0.15, kcal_per_unit: 121 },
-      { id: '6', name: 'Rosado Copa', liters_per_unit: 0.15, kcal_per_unit: 120 },
-      { id: '7', name: 'Gin Tonic', liters_per_unit: 0.25, kcal_per_unit: 200 },
-      { id: '8', name: 'Mojito', liters_per_unit: 0.30, kcal_per_unit: 217 },
-      { id: '9', name: 'Margarita', liters_per_unit: 0.20, kcal_per_unit: 168 },
-    ];
+    if (!drinkId) return;
     
-    const foundDrink = allDrinks.find(d => d.id === drinkId);
-    setDrink(foundDrink);
+    const data = await drinksApi.getById(drinkId);
+    setDrink(data);
     setCustomPrice('');
   };
 
@@ -57,13 +47,12 @@ export default function AddConsumptionScreen() {
     try {
       setIsLoading(true);
       
-      // TODO: Replace with real API call
-      // await consumptionsApi.create(player.id, drinkId, quantity, price, undefined, null);
+      await consumptionsApi.create(player.id, drink.id, quantity, price, undefined, null);
       
       console.log('Creating consumption:', {
         player_id: player.id,
         drink_id: drinkId,
-        quantity,
+        quantity: quantity,
         eur_spent: price,
       });
       
@@ -168,7 +157,7 @@ export default function AddConsumptionScreen() {
           
           <View style={styles.summaryRow}>
             <Typography variant="body" color={Theme.colors.textSecondary}>
-              Total calorías:
+              Total kcal:
             </Typography>
             <Typography variant="body" color={Theme.colors.primary}>
               {totalCalories.toFixed(0)} kcal

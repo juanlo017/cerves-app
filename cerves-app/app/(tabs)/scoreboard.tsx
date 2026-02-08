@@ -1,27 +1,26 @@
 import { useState, useEffect } from 'react';
-import { StyleSheet, View, ScrollView, FlatList } from 'react-native';
+import { StyleSheet, View, FlatList, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { weeklyApi, type LeaderboardPlayer } from '@/lib/api';
-import { Typography, SegmentedControl, LeaderboardItem } from '@/components/ui';
+import { rankingsApi, type RankingConfig } from '@/lib/api';
+import type { LeaderboardPlayer } from '@/lib/api/rankings';
+import { Typography, SegmentedControl, LeaderboardItem, IconButton } from '@/components/ui';
 import { Theme } from '@/constants/Theme';
 
 export default function RankingScreen() {
   const [selectedTab, setSelectedTab] = useState(0);
+  const [monthOffset, setMonthOffset] = useState(0); // 0 = current month
   const [leaderboard, setLeaderboard] = useState<LeaderboardPlayer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [lastUpdate, setLastUpdate] = useState('');
+
+  // Configure ranking period - EASY TO CHANGE!
+  const config: RankingConfig = {
+    rankingPeriod: 'month',  // 'week' | 'month' | 'season' | 'alltime'
+    trendPeriod: 'daily',    // 'daily' | 'weekly'
+  };
 
   useEffect(() => {
     loadLeaderboard();
-  }, [selectedTab]);
-
-  useEffect(() => {
-    const getUpdate = async () => {
-      const date = await weeklyApi.getLastUpdateDate();
-      setLastUpdate(date);
-    };
-    getUpdate();
-  }, []);
+  }, [selectedTab, monthOffset]);
 
   const loadLeaderboard = async () => {
     try {
@@ -29,7 +28,7 @@ export default function RankingScreen() {
       
       if (selectedTab === 0) {
         // Global leaderboard
-        const data = await weeklyApi.getGlobalLeaderboard();
+        const data = await rankingsApi.getLeaderboard(config, monthOffset);
         setLeaderboard(data);
       } else {
         // Events leaderboard (disabled for now)
@@ -42,8 +41,45 @@ export default function RankingScreen() {
     }
   };
 
+  const goToPreviousMonth = () => setMonthOffset(monthOffset - 1);
+  const goToNextMonth = () => {
+    if (rankingsApi.canGoToNextMonth(monthOffset)) {
+      setMonthOffset(monthOffset + 1);
+    }
+  };
+  const goToCurrentMonth = () => setMonthOffset(0);
+
+  const periodName = rankingsApi.getPeriodName(config.rankingPeriod, monthOffset, config.customDays);
+  const trendText = rankingsApi.getTrendText(config.trendPeriod);
+  const isCurrentMonth = monthOffset === 0;
+  const canGoNext = rankingsApi.canGoToNextMonth(monthOffset);
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Month Navigator */}
+      <View style={styles.monthNavigator}>
+        <IconButton icon="◀" onPress={goToPreviousMonth} />
+        
+        <View style={styles.monthRangeContainer}>
+          <Typography variant="h2" align="center">
+            {periodName}
+          </Typography>
+          {!isCurrentMonth && (
+            <TouchableOpacity onPress={goToCurrentMonth} style={styles.currentButton}>
+              <Typography 
+                variant="caption" 
+                color={Theme.colors.background}
+                style={{ fontFamily: Theme.fonts.pixel, fontSize: 10 }}
+              >
+                Mes actual
+              </Typography>
+            </TouchableOpacity>
+          )}
+        </View>
+        
+        <IconButton icon="▶" onPress={goToNextMonth} disabled={!canGoNext} />
+      </View>
+
       <View style={styles.header}>
         <Typography variant="h1" align="center" color={Theme.colors.primary}>
           TOP
@@ -51,9 +87,11 @@ export default function RankingScreen() {
         <Typography variant="h2" align="center">
           PERJUDICADOS
         </Typography>
-        <Typography variant="caption" align="center" color={Theme.colors.textMuted} style={{paddingTop: '2%'}}>
-          última actualización: {lastUpdate}
-        </Typography>
+        {trendText && (
+          <Typography variant="caption" align="center" color={Theme.colors.textMuted} style={{ fontSize: 10 }}>
+            Actualizado cada día
+          </Typography>
+        )}
       </View>
 
       <View style={styles.tabContainer}>
@@ -61,7 +99,7 @@ export default function RankingScreen() {
           options={['GLOBAL', 'EVENTOS']}
           selectedIndex={selectedTab}
           onSelect={setSelectedTab}
-          disabled={[false, true]} // Events disabled for now
+          disabled={[false, true]}
         />
       </View>
 
@@ -73,9 +111,9 @@ export default function RankingScreen() {
         <FlatList
           data={leaderboard}
           keyExtractor={(item) => item.player_id}
-          renderItem={({ item, index }) => (
+          renderItem={({ item }) => (
             <LeaderboardItem
-              rank={index + 1}
+              rank={item.rank}
               playerName={item.player_name}
               avatar={item.avatar}
               liters={item.total_liters}
@@ -86,7 +124,7 @@ export default function RankingScreen() {
           ListEmptyComponent={
             <View style={styles.empty}>
               <Typography variant="body" color={Theme.colors.textSecondary}>
-                No hay datos disponibles
+                No hay datos para este mes
               </Typography>
             </View>
           }
@@ -101,9 +139,30 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Theme.colors.background,
   },
+  monthNavigator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: Theme.spacing.md,
+    backgroundColor: Theme.colors.backgroundLight,
+    borderBottomWidth: 2,
+    borderBottomColor: Theme.colors.border,
+  },
+  monthRangeContainer: {
+    flex: 1,
+    alignItems: 'center',
+    marginHorizontal: Theme.spacing.md,
+  },
+  currentButton: {
+    marginTop: Theme.spacing.xs,
+    paddingHorizontal: Theme.spacing.md,
+    paddingVertical: Theme.spacing.xs,
+    backgroundColor: Theme.colors.secondary,
+    borderRadius: Theme.borderRadius.lg,
+  },
   header: {
-    padding: Theme.spacing.xl,
-    paddingBottom: Theme.spacing.md,
+    padding: Theme.spacing.lg,
+    paddingBottom: Theme.spacing.sm,
   },
   tabContainer: {
     paddingVertical: Theme.spacing.md,
