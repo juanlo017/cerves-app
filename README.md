@@ -35,7 +35,9 @@ The “it actually works” phase.
 - Monthly overview  
 - Tap a day to see details 
 
----
+----
+### **RELEASE 1 🚀 **
+----
 
 ### **Phase 2 — Tracking & History 📊**
 The “now we’re getting serious” phase.
