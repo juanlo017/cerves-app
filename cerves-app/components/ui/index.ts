@@ -4,3 +4,6 @@ export { IconButton } from './IconButton';
 export { GlassDay } from './GlassDay';
 export { StatItem } from './StatItem';
 export { Typography } from './Typography';
+export { CategoryCard } from './CategoryCard';
+export { DrinkItem } from './DrinkItem';
+export { QuantitySelector } from './QuantitySelector';
