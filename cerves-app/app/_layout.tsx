@@ -48,16 +48,16 @@ function RootLayoutNav() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="index" options={{ headerShown: true }} />
         <Stack.Screen 
           name="onboarding" 
           options={{ 
-            headerShown: false,
+            headerShown: true,
             gestureEnabled: false,
           }} 
         />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="drinks" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: true }} />
+        <Stack.Screen name="drinks" options={{ headerShown: true }} />
       </Stack>
     </ThemeProvider>
   );

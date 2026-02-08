@@ -45,9 +45,9 @@ export function LeaderboardItem({ rank, playerName, avatar, liters, trend }: Lea
         
         <Ionicons name={getTrendIcon() as any} size={20} color={getTrendColor()}/>
         
-        <Typography variant="body" style={styles.avatar}>
+{/*         <Typography variant="body" style={styles.avatar}>
           {avatar}
-        </Typography>
+        </Typography> */}
         
         <Typography variant="body" style={styles.playerName} numberOfLines={1}>
           {playerName}

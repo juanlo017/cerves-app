@@ -69,91 +69,148 @@ export const weeklyApi = {
    * @param weekOffset - 0 = current week, -1 = last week, 1 = next week
    */
   async getWeeklyStats(playerId: string, weekOffset: number = 0): Promise<WeeklyStats> {
-    // TODO: Replace with real Supabase queries
-    
-    // For now, return dummy data
-    const today = new Date();
-    const weekStart = getWeekStart(today, weekOffset);
+    const weekStart = getWeekStart(new Date(), weekOffset);
     const weekEnd = getWeekEnd(weekStart);
     
+    // Fetch consumptions for the week
+    const { data: consumptions, error } = await supabase
+      .from('consumptions')
+      .select(`
+        *,
+        drinks (
+          liters_per_unit,
+          kcal_per_unit,
+          name
+        )
+      `)
+      .eq('player_id', playerId)
+      .gte('day', formatDate(weekStart))
+      .lte('day', formatDate(weekEnd))
+      .is('group_id', null); // Only personal consumptions
+
+    if (error) {
+      console.error('Error fetching weekly stats:', error);
+    }
+
+    // Group by day and calculate stats
+    const dailyMap = new Map<string, { liters: number; drinks: number }>();
+    let totalDrinks = 0;
+    let totalLiters = 0;
+    let totalSpent = 0;
+    let totalCalories = 0;
+    const drinkCounts = new Map<string, number>();
+
+    consumptions?.forEach((c: any) => {
+      const drink = c.drinks;
+      const liters = c.qty * drink.liters_per_unit;
+      const calories = c.qty * drink.kcal_per_unit;
+      
+      // Daily totals
+      const current = dailyMap.get(c.day) || { liters: 0, drinks: 0 };
+      dailyMap.set(c.day, {
+        liters: current.liters + liters,
+        drinks: current.drinks + c.qty,
+      });
+      
+      // Week totals
+      totalDrinks += c.qty;
+      totalLiters += liters;
+      totalSpent += c.eur_spent || 0;
+      totalCalories += calories;
+      
+      // Favorite drink tracking
+      drinkCounts.set(drink.name, (drinkCounts.get(drink.name) || 0) + c.qty);
+    });
+
+    // Find favorite drink
+    let favoriteDrink = null;
+    let maxCount = 0;
+    drinkCounts.forEach((count, name) => {
+      if (count > maxCount) {
+        maxCount = count;
+        favoriteDrink = name;
+      }
+    });
+
+    // Build daily consumption array
+    const dailyConsumption: DailyConsumption[] = [];
+    const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const dayShorts = ['LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB', 'DOM'];
+    
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(weekStart);
+      date.setDate(date.getDate() + i);
+      const dateStr = formatDate(date);
+      const dayData = dailyMap.get(dateStr) || { liters: 0, drinks: 0 };
+      
+      dailyConsumption.push({
+        day: dayNames[i],
+        dayShort: dayShorts[i],
+        date: dateStr,
+        liters: dayData.liters,
+        drinks: dayData.drinks,
+        fillState: getGlassState(dayData.liters),
+      });
+    }
+
+    const weeklyGoal = 8.0;
+    const percentageComplete = Math.min(Math.round((totalLiters / weeklyGoal) * 100), 100);
+
     return {
       weekRange: {
         start: formatDate(weekStart),
         end: formatDate(weekEnd),
         display: formatWeekRange(weekStart, weekEnd),
       },
-      weeklyGoal: 8.0,
-      currentProgress: 7.0,
-      percentageComplete: 21,
-      
-      dailyConsumption: [
-        {
-          day: 'Monday',
-          dayShort: 'LUN',
-          date: '2024-02-05',
-          liters: 0.5,
-          drinks: 2,
-          fillState: 'half',
-        },
-        {
-          day: 'Tuesday',
-          dayShort: 'MAR',
-          date: '2024-02-06',
-          liters: 1.2,
-          drinks: 4,
-          fillState: 'overflow',
-        },
-        {
-          day: 'Wednesday',
-          dayShort: 'MIE',
-          date: '2024-02-07',
-          liters: 0,
-          drinks: 0,
-          fillState: 'quarter',
-        },
-        {
-          day: 'Thursday',
-          dayShort: 'JUE',
-          date: '2024-02-08',
-          liters: 0,
-          drinks: 0,
-          fillState: 'empty',
-        },
-        {
-          day: 'Friday',
-          dayShort: 'VIE',
-          date: '2024-02-09',
-          liters: 0,
-          drinks: 0,
-          fillState: 'empty',
-        },
-        {
-          day: 'Saturday',
-          dayShort: 'SAB',
-          date: '2024-02-10',
-          liters: 0,
-          drinks: 0,
-          fillState: 'empty',
-        },
-        {
-          day: 'Sunday',
-          dayShort: 'DOM',
-          date: '2024-02-11',
-          liters: 0,
-          drinks: 0,
-          fillState: 'empty',
-        },
-      ],
-      
+      weeklyGoal,
+      currentProgress: totalLiters,
+      percentageComplete,
+      dailyConsumption,
       weekStats: {
-        totalDrinks: 6,
-        totalSpent: 12.50,
-        totalCalories: 850,
-        favoriteDrink: 'Cerveza Estrella Galicia',
+        totalDrinks,
+        totalSpent,
+        totalCalories: Math.round(totalCalories),
+        favoriteDrink,
       },
-      
-      streak: 21,
+      streak: await this.calculateStreak(playerId),
     };
+  },
+
+  /**
+  * Calculate consecutive days streak
+  */
+  async calculateStreak(playerId: string): Promise<number> {
+    // Get all consumption days ordered by date descending
+    const { data, error } = await supabase
+      .from('consumptions')
+      .select('day')
+      .eq('player_id', playerId)
+      .is('group_id', null)
+      .order('day', { ascending: false });
+
+    if (error || !data || data.length === 0) {
+      return 0;
+    }
+
+    // Get unique days
+    const uniqueDays = [...new Set(data.map(c => c.day))].sort().reverse();
+    
+    // Check for consecutive days starting from today
+    const today = new Date().toISOString().split('T')[0];
+    let streak = 0;
+    let checkDate = new Date(today);
+    
+    for (const day of uniqueDays) {
+      const dayStr = formatDate(checkDate);
+      
+      if (day === dayStr) {
+        streak++;
+        checkDate.setDate(checkDate.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+    return streak;
   },
 
   /**
@@ -164,24 +221,63 @@ export const weeklyApi = {
   },
 
   /**
-   * Get monthly calendar data
-   * @param playerId - Player UUID
-   * @param monthOffset - 0 = current month, -1 = last month, etc.
-   */
+  * Get monthly calendar data
+  * @param playerId - Player UUID
+  * @param monthOffset - 0 = current month, -1 = last month, etc.
+  */
   async getMonthlyData(playerId: string, monthOffset: number = 0): Promise<MonthlyData> {
-    // TODO: Replace with real Supabase queries
-    
     const today = new Date();
     const targetMonth = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
     const year = targetMonth.getFullYear();
     const month = targetMonth.getMonth();
     
-    // Get first day of month and how many days
+    // Get first and last day of month
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
-    const startDayOfWeek = firstDay.getDay(); // 0 = Sunday
+    const startDayOfWeek = firstDay.getDay();
     
+    // Fetch consumptions for the entire month
+    const monthStart = formatDate(firstDay);
+    const monthEnd = formatDate(lastDay);
+    
+    const { data: consumptions, error } = await supabase
+      .from('consumptions')
+      .select(`
+        day,
+        qty,
+        eur_spent,
+        drinks (
+          liters_per_unit,
+          kcal_per_unit
+        )
+      `)
+      .eq('player_id', playerId)
+      .gte('day', monthStart)
+      .lte('day', monthEnd)
+      .is('group_id', null);
+
+    if (error) {
+      console.error('Error fetching monthly data:', error);
+    }
+
+    // Group by day
+    const dailyMap = new Map<string, { liters: number; drinks: number; spent: number; calories: number }>();
+    
+    consumptions?.forEach((c: any) => {
+      const drink = c.drinks;
+      const liters = c.qty * drink.liters_per_unit;
+      const calories = c.qty * drink.kcal_per_unit;
+      
+      const current = dailyMap.get(c.day) || { liters: 0, drinks: 0, spent: 0, calories: 0 };
+      dailyMap.set(c.day, {
+        liters: current.liters + liters,
+        drinks: current.drinks + c.qty,
+        spent: current.spent + (c.eur_spent || 0),
+        calories: current.calories + calories,
+      });
+    });
+
     // Create calendar grid (starting on Monday)
     const adjustedStartDay = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1;
     const days = [];
@@ -196,27 +292,39 @@ export const weeklyApi = {
       });
     }
     
-    // Actual days with dummy data
+    // Actual days with real data
     for (let day = 1; day <= daysInMonth; day++) {
       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      
-      // Random dummy consumption data
-      const liters = Math.random() > 0.3 ? Math.random() * 2 : 0;
-      const fillState = getGlassState(liters);
+      const dayData = dailyMap.get(dateStr) || { liters: 0, drinks: 0, spent: 0, calories: 0 };
       
       days.push({
         day,
         date: dateStr,
-        liters,
-        fillState,
+        liters: dayData.liters,
+        fillState: getGlassState(dayData.liters),
       });
     }
-    
+
+    // Calculate month stats
+    let totalDrinks = 0;
+    let totalLiters = 0;
+    let totalSpent = 0;
+    let totalCalories = 0;
+    let daysActive = 0;
+
+    dailyMap.forEach((data) => {
+      totalDrinks += data.drinks;
+      totalLiters += data.liters;
+      totalSpent += data.spent;
+      totalCalories += data.calories;
+      if (data.drinks > 0) daysActive++;
+    });
+
     const monthNames = [
       'ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO',
       'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'
     ];
-    
+
     return {
       monthRange: {
         month,
@@ -225,11 +333,11 @@ export const weeklyApi = {
       },
       days,
       monthStats: {
-        totalDrinks: 45,
-        totalLiters: 24.5,
-        totalSpent: 123.50,
-        totalCalories: 3500,
-        daysActive: 18,
+        totalDrinks,
+        totalLiters,
+        totalSpent,
+        totalCalories: Math.round(totalCalories),
+        daysActive,
       },
     };
   },
@@ -242,73 +350,132 @@ export const weeklyApi = {
   },
 
   /**
-   * Get global leaderboard
-   */
+  * Get global leaderboard with trend calculation
+  */
   async getGlobalLeaderboard(): Promise<LeaderboardPlayer[]> {
-    // TODO: Replace with real Supabase queries
-    // 1. Get all players with their total consumption
-    // 2. Get previous week consumption for trend calculation
-    // 3. Sort by total_liters descending
+    // Get current week boundaries
+    const currentWeekStart = formatDate(getWeekStart(new Date(), 0));
+    const currentWeekEnd = formatDate(getWeekEnd(getWeekStart(new Date(), 0)));
     
-    // Dummy data
-    return [
-      { 
-        player_id: '1', 
-        player_name: 'JuanloPruebas', 
-        avatar: '🍺',
-        total_liters: 15.5,
-        trend: 'up'
-      },
-      { 
-        player_id: '2', 
-        player_name: 'Paula', 
-        avatar: '🍷',
-        total_liters: 12.3,
-        trend: 'down'
-      },
-      { 
-        player_id: '3', 
-        player_name: 'Carlos', 
-        avatar: '🍸',
-        total_liters: 10.8,
-        trend: 'same'
-      },
-      { 
-        player_id: '4', 
-        player_name: 'Ana', 
-        avatar: '🍹',
-        total_liters: 9.2,
-        trend: 'up'
-      },
-      { 
-        player_id: '5', 
-        player_name: 'Miguel', 
-        avatar: '🍻',
-        total_liters: 8.5,
-        trend: 'down'
-      },
-      { 
-        player_id: '6', 
-        player_name: 'Laura', 
-        avatar: '🥂',
-        total_liters: 7.1,
-        trend: 'up'
-      },
-      { 
-        player_id: '7', 
-        player_name: 'Alicia', 
-        avatar: '🥂',
-        total_liters: 6.1,
-        trend: 'down'
-      },
-      { 
-        player_id: '8', 
-        player_name: 'Juanmi', 
-        avatar: '🥂',
-        total_liters: 4.1,
-        trend: 'down'
-      },
-    ];
+    // Get last week boundaries for trend
+    const lastWeekStart = formatDate(getWeekStart(new Date(), -1));
+    const lastWeekEnd = formatDate(getWeekEnd(getWeekStart(new Date(), -1)));
+
+    // Fetch current week consumptions grouped by player
+    const { data: currentWeekData, error: currentError } = await supabase
+      .from('consumptions')
+      .select(`
+        player_id,
+        qty,
+        drinks (
+          liters_per_unit
+        ),
+        players (
+          display_name,
+          avatar_key
+        )
+      `)
+      .gte('day', currentWeekStart)
+      .lte('day', currentWeekEnd)
+      .is('group_id', null);
+
+    if (currentError) {
+      console.error('Error fetching current week leaderboard:', currentError);
+      return [];
+    }
+
+    // Fetch last week consumptions for trend calculation
+    const { data: lastWeekData, error: lastError } = await supabase
+      .from('consumptions')
+      .select(`
+        player_id,
+        qty,
+        drinks (
+          liters_per_unit
+        )
+      `)
+      .gte('day', lastWeekStart)
+      .lte('day', lastWeekEnd)
+      .is('group_id', null);
+
+    if (lastError) {
+      console.error('Error fetching last week data:', lastError);
+    }
+
+    // Calculate current week totals per player
+    const currentWeekMap = new Map<string, { name: string; avatar: string; liters: number }>();
+    
+    currentWeekData?.forEach((c: any) => {
+      const drink = c.drinks;
+      const player = c.players;
+      const liters = c.qty * drink.liters_per_unit;
+      
+      const current = currentWeekMap.get(c.player_id) || { 
+        name: player?.display_name || 'Unknown',
+        avatar: player?.avatar_key || '🍺',
+        liters: 0 
+      };
+      
+      currentWeekMap.set(c.player_id, {
+        name: current.name,
+        avatar: current.avatar,
+        liters: current.liters + liters,
+      });
+    });
+
+    // Calculate last week totals per player
+    const lastWeekMap = new Map<string, number>();
+    
+    lastWeekData?.forEach((c: any) => {
+      const drink = c.drinks;
+      const liters = c.qty * drink.liters_per_unit;
+      
+      lastWeekMap.set(c.player_id, (lastWeekMap.get(c.player_id) || 0) + liters);
+    });
+
+    // Build leaderboard with rankings
+    const leaderboard: LeaderboardPlayer[] = [];
+    
+    currentWeekMap.forEach((data, playerId) => {
+      leaderboard.push({
+        player_id: playerId,
+        player_name: data.name,
+        avatar: data.avatar,
+        total_liters: data.liters,
+        trend: 'same', // We'll calculate this next
+      });
+    });
+
+    // Sort by total liters (descending)
+    leaderboard.sort((a, b) => b.total_liters - a.total_liters);
+
+    // Calculate trends based on rank changes
+    const lastWeekRankings = Array.from(lastWeekMap.entries())
+      .sort((a, b) => b[1] - a[1])
+      .reduce((acc, [playerId], index) => {
+        acc.set(playerId, index + 1);
+        return acc;
+      }, new Map<string, number>());
+
+    leaderboard.forEach((player, currentRank) => {
+      const lastRank = lastWeekRankings.get(player.player_id);
+      
+      if (!lastRank) {
+        // New player this week
+        player.trend = 'same';
+      } else if (currentRank + 1 < lastRank) {
+        // Moved up in rankings (lower rank number = better)
+        player.trend = 'up';
+      } else if (currentRank + 1 > lastRank) {
+        // Moved down in rankings
+        player.trend = 'down';
+      } else {
+        // Same rank
+        player.trend = 'same';
+      }
+    });
+
+    return leaderboard;
   },
 
   /**

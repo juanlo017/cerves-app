@@ -51,9 +51,6 @@ export default function RankingScreen() {
         <Typography variant="h2" align="center">
           PERJUDICADOS
         </Typography>
-        <Typography variant="caption" align="center" color={Theme.colors.textMuted} style={{paddingTop: '2%'}}>
-          última actualización: {lastUpdate}
-        </Typography>
       </View>
 
       <View style={styles.tabContainer}>
