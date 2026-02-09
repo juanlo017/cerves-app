@@ -416,3 +416,6 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+#Deployment guide
+DEPLOYMENT_GUIDE.md
