@@ -168,7 +168,7 @@ export default function AddConsumptionScreen() {
             <Typography variant="body" color={Theme.colors.textSecondary}>
               Total precio:
             </Typography>
-            <Typography variant="h3" color={Theme.colors.secondary}>
+            <Typography variant="body" color={Theme.colors.secondary}>
               {totalPrice.toFixed(2)}€
             </Typography>
           </View>

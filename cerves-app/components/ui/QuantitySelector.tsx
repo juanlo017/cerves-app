@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
   },
   input: {
     width: 80,
-    height: 50,
+    height: 60,
     backgroundColor: Theme.colors.backgroundCard,
     borderRadius: Theme.borderRadius.md,
     borderWidth: 2,

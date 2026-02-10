@@ -76,6 +76,6 @@ const styles = StyleSheet.create({
   litersText: {
     fontSize: Theme.fontSize.xs,
     color: Theme.colors.textSecondary,
-    fontFamily: Theme.fonts.mono,
+    fontFamily: Theme.fonts.pixel,
   },
 });

@@ -25,7 +25,7 @@ export function Typography({
         { color, textAlign: align },
         style
       ]}
-        numberOfLines={numberOfLines} // ← Add this
+        numberOfLines={numberOfLines} 
       >
         {children}
       </Text>
@@ -35,7 +35,7 @@ export function Typography({
 const styles = StyleSheet.create({
   base: {
     color: Theme.colors.text,
-    fontFamily: Theme.fonts.pixel, // ← TODO usa pixel
+    fontFamily: Theme.fonts.pixel, 
   },
   h1: {
     fontSize: Theme.fontSize.xxxl,

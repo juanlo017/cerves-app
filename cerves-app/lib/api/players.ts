@@ -14,18 +14,17 @@ export const playersApi = {
    * Get a player by their user_id (device_id)
    */
   async getByUserId(userId: string): Promise<Player | null> {
-    const { data, error } = await supabase
-      .from('players')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
-
-    if (error) {
+    try {
+      const { data, error } = await supabase
+        .from('players')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+      return data;
+    } catch (error) {
       console.error('Error fetching player by user_id:', error);
       return null;
-    }
-
-    return data;
+    }    
   },
 
   /**
