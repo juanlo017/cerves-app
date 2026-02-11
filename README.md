@@ -174,42 +174,84 @@ npx expo install react-native-url-polyfill
 
 ---
 
-## 6) Builds (APK / IPA) con EAS
+## 6) 🚀 Production Builds & Deployment
 
 
-### Instalar EAS
+### Instalar EAS CLI
 
 
 ```bash
 npm install -g eas-cli
 eas login
-eas build:configure
 ```
 
 
-### Android (APK instalable para amigos)
+### 🎯 Quick Commands Summary
 
+**Build all platforms:**
 
 ```bash
-eas build -p android --profile preview
+# Android (APK para compartir con amigos)
+npm run build:android
+
+# iOS (para TestFlight)
+npm run build:ios
+
+# Web (exportar estáticos)
+npm run build:web
 ```
 
-
-### Android (AAB para Play Store)
-
+**Deploy web to Vercel:**
 
 ```bash
-eas build -p android --profile production
+npm install -g vercel
+vercel --prod
 ```
 
+---
 
-### iOS (IPA para TestFlight)
-
+### 📱 Android (APK instalable - sin Play Store)
 
 ```bash
-eas build -p ios --profile preview
+npm run build:android
+# o: eas build --platform android --profile production-internal
 ```
 
+- Descarga el APK del link que te da EAS
+- Compártelo directamente con tus amigos
+- Ellos lo instalan sin necesidad de Play Store
+- **No requiere servidor de desarrollo activo**
+
+
+### 🍎 iOS (TestFlight - requiere Apple Developer $99/año)
+
+```bash
+npm run build:ios
+# Espera a que termine, luego:
+eas submit --platform ios
+```
+
+- Invita a tus amigos vía TestFlight app
+- **No requiere servidor de desarrollo activo**
+
+
+### 🌐 Web (Vercel)
+
+**Deploy rápido:**
+
+```bash
+npm run build:web
+npm install -g vercel
+vercel --prod
+```
+
+**O conectar a Git para auto-deploy:**
+
+1. Haz push a GitHub
+2. Ve a [vercel.com](https://vercel.com) → New Project
+3. Importa tu repositorio
+4. Vercel detectará la config de `vercel.json` automáticamente
+5. ¡Deploy! Tu app estará en `yourapp.vercel.app`
 
 ---
 
