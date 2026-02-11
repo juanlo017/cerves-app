@@ -11,7 +11,7 @@ export interface Player {
 
 export const playersApi = {
   /**
-   * Get a player by their user_id (device_id)
+   * Get a player by their user_id (auth user UUID)
    */
   async getByUserId(userId: string): Promise<Player | null> {
     const { data, error } = await supabase
@@ -47,9 +47,16 @@ export const playersApi = {
   },
 
   /**
-   * Create a new player
+   * Create a new player (or update if already exists)
    */
   async create(userId: string, displayName: string, avatarKey: string): Promise<Player> {
+    // First check if player already exists
+    const existing = await this.getByUserId(userId);
+    if (existing) {
+      console.log('⚠️ Player already exists, updating instead');
+      return this.update(existing.id, { display_name: displayName, avatar_key: avatarKey });
+    }
+
     const { data, error } = await supabase
       .from('players')
       .insert({
