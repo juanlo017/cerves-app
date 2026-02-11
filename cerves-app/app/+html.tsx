@@ -18,6 +18,27 @@ export default function Root({ children }: { children: React.ReactNode }) {
         */}
         <ScrollViewStyleReset />
 
+        {/* PWA Manifest */}
+        <link rel="manifest" href="/manifest.json" />
+
+        {/* Android PWA */}
+        <meta name="theme-color" content="#1A1A2E" />
+        <meta name="mobile-web-app-capable" content="yes" />
+
+        {/* iOS PWA */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="Cerves" />
+
+        {/* iOS Icons - Multiple sizes for best quality */}
+        <link rel="apple-touch-icon" href="/assets/images/icon.png" />
+        <link rel="apple-touch-icon" sizes="152x152" href="/assets/images/icon.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/icon.png" />
+        <link rel="apple-touch-icon" sizes="167x167" href="/assets/images/icon.png" />
+
+        {/* Favicon */}
+        <link rel="icon" type="image/png" href="/assets/images/favicon.png" />
+
         {/* Using raw CSS styles as an escape-hatch to ensure the background color never flickers in dark-mode. */}
         <style dangerouslySetInnerHTML={{ __html: responsiveBackground }} />
         {/* Add any additional <head> elements that you want globally available on web... */}
