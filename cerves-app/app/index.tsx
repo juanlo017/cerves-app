@@ -1,44 +1,30 @@
 import { useEffect } from "react";
 import { router } from "expo-router";
 import { View, ActivityIndicator, StyleSheet, Text } from "react-native";
-import { useAuth, getDeviceId } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Index() {
-  const { isLoading, hasCompletedOnboarding, signIn } = useAuth();
+  const { isLoading, hasCompletedOnboarding, session } = useAuth();
 
   useEffect(() => {
-    console.log('📱 Index screen mounted');
-    
-    const initAuth = async () => {
-      try {
-        console.log('🔍 Getting device ID...');
-        const deviceId = await getDeviceId();
-        console.log('✅ Device ID:', deviceId);
-        
-        console.log('🔍 Calling signIn...');
-        await signIn(deviceId);
-        console.log('✅ signIn complete');
-      } catch (error) {
-        console.error('❌ Error in initAuth:', error);
-      }
-    };
+    console.log('🔄 Auth state changed:', { isLoading, hasCompletedOnboarding, hasSession: !!session });
 
-    initAuth();
-  }, []);
-
-  useEffect(() => {
-    console.log('🔄 Auth state changed:', { isLoading, hasCompletedOnboarding });
-    
     if (!isLoading) {
-      if (hasCompletedOnboarding) {
-        console.log('✅ Navigating to tabs');
-        router.replace("/(tabs)");
-      } else {
+      if (!session) {
+        // No session → go to login
+        console.log('✅ Navigating to login');
+        router.replace("/login");
+      } else if (session && !hasCompletedOnboarding) {
+        // Has session but no profile → go to onboarding
         console.log('✅ Navigating to onboarding');
         router.replace("/onboarding");
+      } else if (session && hasCompletedOnboarding) {
+        // Has session and profile → go to main app
+        console.log('✅ Navigating to tabs');
+        router.replace("/(tabs)");
       }
     }
-  }, [isLoading, hasCompletedOnboarding]);
+  }, [isLoading, hasCompletedOnboarding, session]);
 
   console.log('🎨 Rendering loading screen');
 

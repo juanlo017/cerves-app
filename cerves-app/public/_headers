@@ -1,0 +1,11 @@
+# Service Worker headers
+/service-worker.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/workbox-*.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+# Manifest
+/manifest.json
+  Content-Type: application/manifest+json
+  Cache-Control: public, max-age=0, must-revalidate
