@@ -228,8 +228,9 @@ const styles = StyleSheet.create({
   // Glass Grid
   glassGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: Theme.spacing.md,
+    justifyContent: 'center',
+    gap: Theme.spacing.lg,
+    marginTop: Theme.spacing.sm,
   },
 
   // Stats Grid
@@ -245,6 +246,11 @@ const styles = StyleSheet.create({
   },
   streakContent: {
     flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  streakContentTitle: {
+    flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
   },

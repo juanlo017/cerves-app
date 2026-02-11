@@ -1,10 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
+import { Text } from 'react-native';
 import { useColorScheme } from '@/components/useColorScheme';
 import { Theme } from '@/constants/Theme';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const { player } = useAuth();
 
   return (
     <Tabs
@@ -24,6 +27,7 @@ export default function TabLayout() {
           fontFamily: Theme.fonts.pixel,
         },
         headerShown: false,
+        tabBarShowLabel: false
       }}
     >
       <Tabs.Screen
@@ -41,6 +45,17 @@ export default function TabLayout() {
           title: 'AÑADIR',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="add-circle" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'PERFIL',
+          tabBarIcon: ({ color, size }) => (
+            <Text style={{ fontSize: size }}>
+              <Ionicons name="body" size={size} color={color} />
+            </Text>
           ),
         }}
       />

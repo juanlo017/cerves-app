@@ -55,8 +55,8 @@ const styles = StyleSheet.create({
     fontFamily: Theme.fonts.pixel,
   },
   glass: {
-    width: 40,
-    height: 60,
+    width: 42,
+    height: 48,
     borderRadius: Theme.borderRadius.md,
     justifyContent: 'center',
     alignItems: 'center',
@@ -66,12 +66,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     },
     glassToday: {
-    borderColor: Theme.colors.secondary,
-    borderWidth: 3,
+    backgroundColor: Theme.colors.primary,
+    borderColor: Theme.colors.primary,
     },
   glassImage: {
-    width: 36,
-    height: 56,
+    width: 38,
+    height: 44,
   },
   litersText: {
     fontSize: Theme.fontSize.xs,

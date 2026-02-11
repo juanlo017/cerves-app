@@ -2,11 +2,13 @@ import { useState } from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
+  Pressable,
   StyleSheet,
   Alert,
 } from 'react-native';
 import { useAuth } from '@/contexts/AuthContext';
+import { Theme } from '@/constants/Theme';
+import { Typography } from '@/components/ui/Typography';
 
 export default function Login() {
   const { signInWithGoogle } = useAuth();
@@ -28,20 +30,29 @@ export default function Login() {
     <View style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.emoji}>🍻</Text>
-        <Text style={styles.title}>Welcome to Cerves!</Text>
-        <Text style={styles.subtitle}>
-          Track your drinks and compete with friends
-        </Text>
 
-        <TouchableOpacity
+        <View style={styles.titleContainer}>
+          <Typography variant="h1" style={styles.title}>
+            CERVES{' '}
+          </Typography>
+          <Typography variant="h1" style={styles.subtitle}>
+            APP
+          </Typography>
+        </View>
+
+        <Typography variant="body" style={styles.subtitle}>
+          Bebe y compite con amigos
+        </Typography>
+
+        <Pressable
           style={[styles.googleButton, isLoading && styles.googleButtonDisabled]}
           onPress={handleGoogleSignIn}
           disabled={isLoading}
         >
-          <Text style={styles.googleButtonText}>
-            {isLoading ? 'Signing in...' : '🔐 Sign in with Google'}
-          </Text>
-        </TouchableOpacity>
+          <Typography variant="caption" style={styles.googleButtonText}>
+            {isLoading ? 'SIGNING IN...' : 'INICIA CON GOOGLE'}
+          </Typography>
+        </Pressable>
       </View>
     </View>
   );
@@ -50,44 +61,47 @@ export default function Login() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: Theme.colors.background,
   },
   content: {
     flex: 1,
-    padding: 24,
+    padding: Theme.spacing.xl,
     justifyContent: 'center',
     alignItems: 'center',
   },
   emoji: {
-    fontSize: 80,
-    marginBottom: 24,
+    fontSize: 100,
+    marginBottom: Theme.spacing.xl,
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginBottom: Theme.spacing.md,
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 8,
+    color: Theme.colors.primary,
   },
   subtitle: {
-    fontSize: 18,
-    color: '#666',
     textAlign: 'center',
-    marginBottom: 48,
+    marginBottom: Theme.spacing.xxl,
+    color: Theme.colors.textSecondary,
   },
   googleButton: {
-    backgroundColor: '#4285F4',
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 12,
+    backgroundColor: Theme.colors.primary,
+    paddingVertical: Theme.spacing.md,
+    paddingHorizontal: Theme.spacing.xl,
+    borderRadius: Theme.borderRadius.lg,
     alignItems: 'center',
-    minWidth: 250,
+    minWidth: 280,
+    borderWidth: 2,
+    borderColor: Theme.colors.border,
   },
   googleButtonDisabled: {
-    backgroundColor: '#ccc',
+    backgroundColor: Theme.colors.disabled,
+    borderColor: Theme.colors.disabled,
   },
   googleButtonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: '600',
+    color: Theme.colors.background,
   },
 });

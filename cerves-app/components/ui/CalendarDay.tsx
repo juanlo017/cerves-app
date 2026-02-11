@@ -34,7 +34,7 @@ export function CalendarDay({ day, liters, fillState, isToday, onPress }: Calend
       onPress={onPress}
       disabled={!onPress}
     >
-      <Typography variant="caption" style={styles.dayNumber}>
+      <Typography variant="caption" style={isToday ? { ...styles.dayNumber, ...styles.dayNumberToday } : styles.dayNumber}>
         {day}
       </Typography>
       
@@ -44,7 +44,7 @@ export function CalendarDay({ day, liters, fillState, isToday, onPress }: Calend
         resizeMode="contain"
       />
       
-      <Typography variant="caption" style={styles.litersText}>
+      <Typography variant="caption" style={isToday ? styles.litersTextToday : styles.litersText }>
         {liters.toFixed(1)}L
       </Typography>
     </TouchableOpacity>
@@ -69,12 +69,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cellToday: {
-    borderColor: Theme.colors.secondary,
-    borderWidth: 2,
+    backgroundColor: Theme.colors.primary,
   },
   dayNumber: {
     fontSize: 8,
     alignSelf: 'flex-start',
+  },
+  dayNumberToday: {
+    color: Theme.colors.border,
   },
   glassImage: {
     width: 18,
@@ -82,5 +84,9 @@ const styles = StyleSheet.create({
   },
   litersText: {
     fontSize: 7,
+  },
+  litersTextToday: {
+    fontSize: 7,
+    color: Theme.colors.backgroundCard,
   },
 });

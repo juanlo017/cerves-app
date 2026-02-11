@@ -3,13 +3,15 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
+  Pressable,
   StyleSheet,
   ScrollView,
   Alert,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
+import { Theme } from '@/constants/Theme';
+import { Typography } from '@/components/ui/Typography';
 
 const AVATARS = [
   { key: 'avatar_beer', emoji: '🍺' },
@@ -54,27 +56,37 @@ export default function Onboarding() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>Welcome to Cerves! 🍻</Text>
-        <Text style={styles.subtitle}>Let's set up your profile</Text>
+        <Typography variant="h2" style={styles.title}>
+          BIENVENIDO!
+        </Typography>
+
+        <Typography variant="caption" style={styles.subtitle}>
+          CONFIGURA TU PERFIL
+        </Typography>
 
         <View style={styles.section}>
-          <Text style={styles.label}>What's your name?</Text>
+          <Typography variant="body" style={styles.label}>
+            ¿QUIÉN ERES?
+          </Typography>
           <TextInput
             style={styles.input}
-            placeholder="Enter your display name"
+            placeholder="Escribe tu nombre aquí"
+            placeholderTextColor={Theme.colors.textMuted}
             value={name}
             onChangeText={setName}
-            maxLength={30}
+            maxLength={12}
             autoCapitalize="words"
             autoCorrect={false}
           />
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.label}>Choose your avatar</Text>
+          <Typography variant="body" style={styles.label}>
+            ELIGE TU AVATAR
+          </Typography>
           <View style={styles.avatarGrid}>
             {AVATARS.map((avatar) => (
-              <TouchableOpacity
+              <Pressable
                 key={avatar.key}
                 style={[
                   styles.avatarButton,
@@ -83,12 +95,12 @@ export default function Onboarding() {
                 onPress={() => setSelectedAvatar(avatar.key)}
               >
                 <Text style={styles.avatarEmoji}>{avatar.emoji}</Text>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
         </View>
 
-        <TouchableOpacity
+        <Pressable
           style={[
             styles.completeButton,
             (!name.trim() || !selectedAvatar || isLoading) && styles.completeButtonDisabled,
@@ -96,10 +108,10 @@ export default function Onboarding() {
           onPress={handleComplete}
           disabled={!name.trim() || !selectedAvatar || isLoading}
         >
-          <Text style={styles.completeButtonText}>
-            {isLoading ? 'Creating Profile...' : 'Get Started'}
-          </Text>
-        </TouchableOpacity>
+          <Typography variant="body" style={styles.completeButtonText}>
+            {isLoading ? 'CREATING PROFILE...' : 'GET STARTED'}
+          </Typography>
+        </Pressable>
       </View>
     </ScrollView>
   );
@@ -108,76 +120,76 @@ export default function Onboarding() {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: '#fff',
+    backgroundColor: Theme.colors.background,
   },
   content: {
     flex: 1,
-    padding: 24,
+    padding: Theme.spacing.xl,
     justifyContent: 'center',
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: Theme.spacing.md,
+    color: Theme.colors.primary,
   },
   subtitle: {
-    fontSize: 18,
-    color: '#666',
     textAlign: 'center',
-    marginBottom: 48,
+    marginBottom: Theme.spacing.xxl,
+    color: Theme.colors.textSecondary,
   },
   section: {
-    marginBottom: 32,
+    marginBottom: Theme.spacing.xl,
   },
   label: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 12,
+    marginBottom: Theme.spacing.md,
+    color: Theme.colors.primary,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    backgroundColor: '#f9f9f9',
+    borderWidth: 2,
+    borderColor: Theme.colors.border,
+    borderRadius: Theme.borderRadius.lg,
+    padding: Theme.spacing.md,
+    fontSize: Theme.fontSize.base,
+    backgroundColor: Theme.colors.backgroundCard,
+    color: Theme.colors.text,
+    fontFamily: Theme.fonts.system,
   },
   avatarGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: Theme.spacing.md,
   },
   avatarButton: {
     width: 70,
     height: 70,
     borderRadius: 35,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: Theme.colors.backgroundCard,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
-    borderColor: 'transparent',
+    borderColor: Theme.colors.border,
   },
   avatarButtonSelected: {
-    borderColor: '#007AFF',
-    backgroundColor: '#E3F2FF',
+    borderColor: Theme.colors.primary,
+    backgroundColor: Theme.colors.backgroundLight,
   },
   avatarEmoji: {
     fontSize: 32,
   },
   completeButton: {
-    backgroundColor: '#007AFF',
-    padding: 18,
-    borderRadius: 12,
+    backgroundColor: Theme.colors.primary,
+    padding: Theme.spacing.md,
+    borderRadius: Theme.borderRadius.lg,
     alignItems: 'center',
-    marginTop: 24,
+    marginTop: Theme.spacing.xl,
+    borderWidth: 2,
+    borderColor: Theme.colors.border,
   },
   completeButtonDisabled: {
-    backgroundColor: '#ccc',
+    backgroundColor: Theme.colors.disabled,
+    borderColor: Theme.colors.disabled,
   },
   completeButtonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: '600',
+    color: Theme.colors.background,
   },
 });
