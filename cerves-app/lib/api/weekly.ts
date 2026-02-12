@@ -390,9 +390,9 @@ function formatWeekRange(start: Date, end: Date): string {
  */
 export function getGlassState(liters: number): DailyConsumption['fillState'] {
   if (liters === 0) return 'empty';
-  if (liters <= 0.25) return 'quarter';
-  if (liters <= 0.5) return 'half';
-  if (liters <= 1) return 'full';
+  if (liters <= 1) return 'quarter';
+  if (liters <= 1.5) return 'half';
+  if (liters <= 2) return 'full';
   return 'overflow';
 }
 
