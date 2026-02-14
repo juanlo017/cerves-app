@@ -3,7 +3,7 @@ import { StyleSheet, View, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { weeklyApi, type WeeklyStats } from '@/lib/api';
-import { Card, ProgressBar, IconButton, GlassDay, StatItem, Typography } from '@/components/ui';
+import { Card, ProgressBar, IconButton, GlassDay, StatItem, Typography, DayDetailsModal } from '@/components/ui';
 import { Theme } from '@/constants/Theme';
 
 export default function HomeScreen() {
@@ -11,6 +11,8 @@ export default function HomeScreen() {
   const [weekOffset, setWeekOffset] = useState(0);
   const [weeklyData, setWeeklyData] = useState<WeeklyStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   useEffect(() => {
     loadWeeklyData();
@@ -37,6 +39,11 @@ export default function HomeScreen() {
     }
   };
   const goToCurrentWeek = () => setWeekOffset(0);
+
+  const handleDayPress = (date: string) => {
+    setSelectedDate(date);
+    setModalVisible(true);
+  };
 
   if (!player || isLoading || !weeklyData) {
     return (
@@ -114,6 +121,7 @@ export default function HomeScreen() {
                 liters={day.liters}
                 fillState={day.fillState}
                 isToday={day.date === today}
+                onPress={() => handleDayPress(day.date)}
               />
             ))}
           </View>
@@ -183,6 +191,14 @@ export default function HomeScreen() {
 
         <View style={{ height: Theme.spacing.xl }} />
       </ScrollView>
+
+      {/* Day Details Modal */}
+      <DayDetailsModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        date={selectedDate}
+        playerId={player.id}
+      />
     </SafeAreaView>
   );
 }

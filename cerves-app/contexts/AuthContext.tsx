@@ -152,8 +152,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('🔍 Starting Google sign-in...', 'Platform:', Platform.OS);
 
-      // Use window.location.origin for web/PWA
-      const redirectTo = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8081';
+      // Use localhost in development, production URL in production
+      const isDevelopment = typeof window !== 'undefined' &&
+        (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+      const redirectTo = isDevelopment
+        ? 'http://localhost:8081'
+        : (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8081');
 
       console.log('🔍 Redirect URL:', redirectTo);
 

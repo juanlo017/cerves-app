@@ -11,3 +11,4 @@ export { LeaderboardItem } from './LeaderboardItem';
 export { SegmentedControl } from './SegmentedControl';
 export { CalendarDay } from './CalendarDay';
 export { MonthNavigator } from './MonthNavigator';
+export { DayDetailsModal } from './DayDetailsModal';

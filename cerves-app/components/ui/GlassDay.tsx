@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { Theme } from '@/constants/Theme';
 
 type FillState = 'empty' | 'quarter' | 'half' | 'full' | 'overflow';
@@ -8,6 +8,7 @@ interface GlassDayProps {
   liters: number;
   fillState: FillState;
   isToday?: boolean;
+  onPress?: () => void;
 }
 
 // Mapeo de estados a imágenes
@@ -19,25 +20,39 @@ const glassImages = {
   overflow: require('@/assets/images/secuenciaCerveza/secuenciaCerveza3.png'), // Desbordando usa la misma que full
 };
 
-export function GlassDay({ dayShort, liters, fillState, isToday }: GlassDayProps) {
-  return (
-    <View style={styles.container}>
+export function GlassDay({ dayShort, liters, fillState, isToday, onPress }: GlassDayProps) {
+  const content = (
+    <>
       <Text style={styles.dayLabel}>{dayShort}</Text>
-      
+
       <View style={[
         styles.glass,
         isToday ? styles.glassToday : { borderColor: Theme.colors.border, borderWidth: 2 }
         ]}>
-        <Image 
-          source={glassImages[fillState]} 
+        <Image
+          source={glassImages[fillState]}
           style={styles.glassImage}
           resizeMode="contain"
         />
       </View>
-      
+
       <Text style={styles.litersText}>
         {liters > 0 ? `${liters.toFixed(2)}L` : '-'}
       </Text>
+    </>
+  );
+
+  if (onPress) {
+    return (
+      <TouchableOpacity style={styles.container} onPress={onPress}>
+        {content}
+      </TouchableOpacity>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      {content}
     </View>
   );
 }
@@ -74,7 +89,7 @@ const styles = StyleSheet.create({
     height: 44,
   },
   litersText: {
-    fontSize: Theme.fontSize.xs,
+    fontSize: Theme.fontSize.xxs,
     color: Theme.colors.textSecondary,
     fontFamily: Theme.fonts.pixel,
   },

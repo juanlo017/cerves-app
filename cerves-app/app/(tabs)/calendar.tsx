@@ -3,7 +3,7 @@ import { StyleSheet, View, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { weeklyApi, type MonthlyData } from '@/lib/api';
-import { Card, Typography, MonthNavigator, CalendarDay, StatItem } from '@/components/ui';
+import { Card, Typography, MonthNavigator, CalendarDay, StatItem, DayDetailsModal } from '@/components/ui';
 import { Theme } from '@/constants/Theme';
 
 const WEEKDAY_LABELS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
@@ -13,6 +13,8 @@ export default function CalendarScreen() {
   const [monthOffset, setMonthOffset] = useState(0);
   const [monthlyData, setMonthlyData] = useState<MonthlyData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   useEffect(() => {
     loadMonthlyData();
@@ -43,6 +45,13 @@ export default function CalendarScreen() {
     if (!dateStr) return false;
     const today = new Date().toISOString().split('T')[0];
     return dateStr === today;
+  };
+
+  const handleDayPress = (date: string | null) => {
+    if (date) {
+      setSelectedDate(date);
+      setModalVisible(true);
+    }
   };
 
   if (!player || isLoading || !monthlyData) {
@@ -92,6 +101,7 @@ export default function CalendarScreen() {
                 liters={dayData.liters}
                 fillState={dayData.fillState}
                 isToday={isToday(dayData.date)}
+                onPress={() => handleDayPress(dayData.date)}
               />
             ))}
           </View>
@@ -141,6 +151,14 @@ export default function CalendarScreen() {
 
         <View style={{ height: Theme.spacing.xl }} />
       </ScrollView>
+
+      {/* Day Details Modal */}
+      <DayDetailsModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        date={selectedDate}
+        playerId={player.id}
+      />
     </SafeAreaView>
   );
 }
