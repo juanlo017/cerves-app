@@ -7,9 +7,11 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "build:web": "expo export --platform web",
-    "build:android": "eas build --platform android --profile production-internal",
-    "build:ios": "eas build --platform ios --profile production"
+    "bump": "node scripts/bump-version.js",
+    "build:web": "npm run bump && expo export --platform web",
+    "build:android": "npm run bump && eas build --platform android --profile production-internal",
+    "build:ios": "npm run bump && eas build --platform ios --profile production",
+    "deploy:web": "npm run build:web && vercel --prod"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
