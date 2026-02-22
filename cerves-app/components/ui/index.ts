@@ -12,3 +12,6 @@ export { SegmentedControl } from './SegmentedControl';
 export { CalendarDay } from './CalendarDay';
 export { MonthNavigator } from './MonthNavigator';
 export { DayDetailsModal } from './DayDetailsModal';
+export { GroupSelector } from './GroupSelector';
+export { InvitationItem } from './InvitationItem';
+export { GroupManageModal } from './GroupManageModal';

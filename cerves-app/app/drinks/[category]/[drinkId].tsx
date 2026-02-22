@@ -3,7 +3,7 @@ import { StyleSheet, View, ScrollView, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
-import { consumptionsApi, drinksApi } from '@/lib/api';
+import { consumptionsApi, drinksApi, playersApi } from '@/lib/api';
 import { Card, Typography, IconButton, QuantitySelector } from '@/components/ui';
 import { Theme } from '@/constants/Theme';
 import { TouchableOpacity } from 'react-native';
@@ -11,7 +11,7 @@ import { TouchableOpacity } from 'react-native';
 
 export default function AddConsumptionScreen() {
   const { category, drinkId } = useLocalSearchParams<{ category: string; drinkId: string }>();
-  
+
   console.log('📍 AddConsumptionScreen mounted');
   console.log('📦 Category:', category);
   console.log('📦 DrinkId:', drinkId);
@@ -21,17 +21,37 @@ export default function AddConsumptionScreen() {
   const [quantity, setQuantity] = useState(1);
   const [customPrice, setCustomPrice] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [groups, setGroups] = useState<Array<{ id: string; name: string }>>([]);
+  const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([]);
 
   useEffect(() => {
     loadDrink();
+    loadGroups();
   }, [drinkId]);
 
   const loadDrink = async () => {
     if (!drinkId) return;
-    
+
     const data = await drinksApi.getById(drinkId);
     setDrink(data);
     setCustomPrice('');
+  };
+
+  const loadGroups = async () => {
+    if (!player) return;
+    const memberships = await playersApi.getGroups(player.id);
+    const playerGroups = memberships
+      .map((m: any) => m.groups)
+      .filter(Boolean);
+    setGroups(playerGroups);
+  };
+
+  const toggleGroup = (groupId: string) => {
+    setSelectedGroupIds(prev =>
+      prev.includes(groupId)
+        ? prev.filter(id => id !== groupId)
+        : [...prev, groupId]
+    );
   };
 
   const handleSubmit = async () => {
@@ -47,13 +67,21 @@ export default function AddConsumptionScreen() {
     try {
       setIsLoading(true);
       
-      await consumptionsApi.create(player.id, drink.id, quantity, price, undefined, null);
-      
+      await consumptionsApi.create(
+        player.id,
+        drink.id,
+        quantity,
+        price,
+        undefined,
+        selectedGroupIds.length > 0 ? selectedGroupIds : null
+      );
+
       console.log('Creating consumption:', {
         player_id: player.id,
         drink_id: drinkId,
         quantity: quantity,
         eur_spent: price,
+        groups: selectedGroupIds,
       });
       
       Alert.alert(
@@ -140,6 +168,41 @@ export default function AddConsumptionScreen() {
             Ingresa el precio total pagado
           </Typography>
         </Card>
+
+        {groups.length > 0 && (
+          <Card>
+            <Typography variant="h3" align="center">
+              GRUPOS
+            </Typography>
+            <Typography variant="caption" align="center" style={{ marginTop: Theme.spacing.xs, marginBottom: Theme.spacing.md }}>
+              Selecciona en qué grupos registrar
+            </Typography>
+            <View style={styles.groupChips}>
+              {groups.map((group) => {
+                const isSelected = selectedGroupIds.includes(group.id);
+                return (
+                  <TouchableOpacity
+                    key={group.id}
+                    style={[styles.groupChip, isSelected && styles.groupChipSelected]}
+                    onPress={() => toggleGroup(group.id)}
+                  >
+                    <Typography
+                      variant="caption"
+                      style={isSelected ? styles.groupChipTextSelected : styles.groupChipText}
+                    >
+                      {group.name}
+                    </Typography>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+            {selectedGroupIds.length === 0 && (
+              <Typography variant="caption" align="center" color={Theme.colors.textMuted} style={{ marginTop: Theme.spacing.sm }}>
+                Sin grupo — solo registro personal
+              </Typography>
+            )}
+          </Card>
+        )}
 
         <Card>
           <Typography variant="h3" align="center" style={{ marginBottom: Theme.spacing.md }}>
@@ -241,6 +304,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginVertical: Theme.spacing.sm,
+  },
+  groupChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Theme.spacing.sm,
+    justifyContent: 'center',
+  },
+  groupChip: {
+    paddingHorizontal: Theme.spacing.md,
+    paddingVertical: Theme.spacing.sm,
+    borderRadius: Theme.borderRadius.lg,
+    borderWidth: 2,
+    borderColor: Theme.colors.border,
+    backgroundColor: Theme.colors.backgroundCard,
+  },
+  groupChipSelected: {
+    backgroundColor: Theme.colors.primary,
+    borderColor: Theme.colors.primary,
+  },
+  groupChipText: {
+    color: Theme.colors.textSecondary,
+  },
+  groupChipTextSelected: {
+    color: Theme.colors.background,
   },
   submitButton: {
     backgroundColor: Theme.colors.primary,

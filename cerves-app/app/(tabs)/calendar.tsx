@@ -12,17 +12,19 @@ export default function CalendarScreen() {
   const { player } = useAuth();
   const [monthOffset, setMonthOffset] = useState(0);
   const [monthlyData, setMonthlyData] = useState<MonthlyData | null>(null);
+  const [streak, setStreak] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   useEffect(() => {
     loadMonthlyData();
+    loadStreak();
   }, [monthOffset, player]);
 
   const loadMonthlyData = async () => {
     if (!player) return;
-    
+
     try {
       setIsLoading(true);
       const data = await weeklyApi.getMonthlyData(player.id, monthOffset);
@@ -32,6 +34,12 @@ export default function CalendarScreen() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const loadStreak = async () => {
+    if (!player) return;
+    const s = await weeklyApi.calculateStreak(player.id);
+    setStreak(s);
   };
 
   const goToPreviousMonth = () => setMonthOffset(monthOffset - 1);
@@ -107,6 +115,30 @@ export default function CalendarScreen() {
           </View>
         </Card>
 
+        {/* Streak */}
+        <Card
+          variant="dark"
+          style={{
+            backgroundColor: streak > 0 ? Theme.colors.streakBackgroundCard : Theme.colors.backgroundCard,
+            borderColor: streak > 0 ? Theme.colors.streakBorder : Theme.colors.primary,
+            borderWidth: 3,
+          }}
+        >
+          <View style={styles.streakContent}>
+            <Typography variant="h1">
+              {streak > 0 ? '🔥' : '🧊'}
+            </Typography>
+            <View style={{ marginLeft: Theme.spacing.md }}>
+              <Typography
+                variant="h2"
+                color={streak > 0 ? Theme.colors.text : Theme.colors.info}
+              >
+                {streak} días
+              </Typography>
+            </View>
+          </View>
+        </Card>
+
         {/* Month Stats */}
         <Card>
           <Typography variant="h3" align="center" style={{ marginBottom: Theme.spacing.md }}>
@@ -148,7 +180,6 @@ export default function CalendarScreen() {
             </Typography>
           </View>
         </Card>
-
         <View style={{ height: Theme.spacing.xl }} />
       </ScrollView>
 
@@ -198,5 +229,10 @@ const styles = StyleSheet.create({
     paddingTop: Theme.spacing.sm,
     borderTopWidth: 1,
     borderTopColor: Theme.colors.border,
+  },
+  streakContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

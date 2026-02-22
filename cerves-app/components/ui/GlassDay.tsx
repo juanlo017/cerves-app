@@ -79,11 +79,11 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: Theme.colors.border,
     backgroundColor: 'transparent',
-    },
-    glassToday: {
-    backgroundColor: Theme.colors.primary,
-    borderColor: Theme.colors.primary,
-    },
+  },
+  glassToday: {
+  backgroundColor: Theme.colors.primary,
+  borderColor: Theme.colors.primary,
+  },
   glassImage: {
     width: 38,
     height: 44,

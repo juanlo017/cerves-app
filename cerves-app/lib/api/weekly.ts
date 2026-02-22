@@ -171,6 +171,7 @@ export const weeklyApi = {
 
   /**
   * Calculate consecutive days streak
+  * Allows a 1-day grace period: streak only breaks after 2 consecutive days without drinking
   */
   async calculateStreak(playerId: string): Promise<number> {
     // Get all consumption days ordered by date descending
@@ -185,23 +186,28 @@ export const weeklyApi = {
       return 0;
     }
 
-    // Get unique days
-    const uniqueDays = [...new Set(data.map(c => c.day))].sort().reverse();
-    
-    // Check for consecutive days starting from today
+    // Get unique days as a Set for fast lookup
+    const uniqueDays = new Set(data.map(c => c.day));
+
     const today = new Date().toISOString().split('T')[0];
     let streak = 0;
     let checkDate = new Date(today);
-    
-    for (const day of uniqueDays) {
+    let missedConsecutive = 0;
+
+    // Walk backwards from today
+    for (let i = 0; i < 365; i++) {
       const dayStr = formatDate(checkDate);
-      
-      if (day === dayStr) {
+
+      if (uniqueDays.has(dayStr)) {
         streak++;
-        checkDate.setDate(checkDate.getDate() - 1);
+        missedConsecutive = 0;
       } else {
-        break;
+        missedConsecutive++;
+        // Break only after 2 consecutive days without drinking
+        if (missedConsecutive >= 2) break;
       }
+
+      checkDate.setDate(checkDate.getDate() - 1);
     }
     return streak;
   },

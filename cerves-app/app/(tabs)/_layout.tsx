@@ -1,13 +1,35 @@
+import { useState, useEffect, useCallback } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import { Text } from 'react-native';
+import { Text, View, StyleSheet } from 'react-native';
 import { useColorScheme } from '@/components/useColorScheme';
 import { Theme } from '@/constants/Theme';
 import { useAuth } from '@/contexts/AuthContext';
+import { invitationsApi } from '@/lib/api';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-  const { player } = useAuth();
+  const { player, session } = useAuth();
+  const [invitationCount, setInvitationCount] = useState(0);
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      loadInvitationCount();
+      // Refresh every 30 seconds
+      const interval = setInterval(loadInvitationCount, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [session?.user?.id]);
+
+  const loadInvitationCount = async () => {
+    if (!session?.user?.id) return;
+    try {
+      const count = await invitationsApi.getPendingCount(session.user.id);
+      setInvitationCount(count);
+    } catch (error) {
+      // Silently fail for badge count
+    }
+  };
 
   return (
     <Tabs
@@ -53,9 +75,14 @@ export default function TabLayout() {
         options={{
           title: 'PERFIL',
           tabBarIcon: ({ color, size }) => (
-            <Text style={{ fontSize: size }}>
+            <View>
               <Ionicons name="body" size={size} color={color} />
-            </Text>
+              {invitationCount > 0 && (
+                <View style={badgeStyles.badge}>
+                  <Text style={badgeStyles.badgeText}>{invitationCount}</Text>
+                </View>
+              )}
+            </View>
           ),
         }}
       />
@@ -80,3 +107,24 @@ export default function TabLayout() {
     </Tabs>
   );
 }
+
+const badgeStyles = StyleSheet.create({
+  badge: {
+    position: 'absolute',
+    top: -4,
+    right: -8,
+    backgroundColor: Theme.colors.error,
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 3,
+  },
+  badgeText: {
+    color: Theme.colors.text,
+    fontSize: 9,
+    fontWeight: 'bold',
+    fontFamily: Theme.fonts.pixel,
+  },
+});
