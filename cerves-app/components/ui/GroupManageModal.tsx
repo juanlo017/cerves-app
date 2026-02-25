@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import {
   Modal, View, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, Alert, Platform, ViewStyle, TextStyle,
+  TextInput, Alert, ViewStyle, TextStyle,
 } from 'react-native';
 import { Theme } from '@/constants/Theme';
 import { Typography } from './Typography';
 import { Card } from './Card';
+import { ConfirmModal } from './ConfirmModal';
 import { groupsApi, type Group, type GroupMemberWithPlayer } from '@/lib/api/groups';
 import { invitationsApi } from '@/lib/api/invitations';
 
@@ -35,6 +36,7 @@ export function GroupManageModal({
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Array<{ id: string; user_id: string; display_name: string; avatar_key: string }>>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
 
   useEffect(() => {
     if (visible) {
@@ -101,32 +103,20 @@ export function GroupManageModal({
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!group) return;
+    setConfirmDeleteVisible(true);
+  };
 
-    const doDelete = async () => {
-      try {
-        await groupsApi.delete(group.id);
-        onGroupDeleted?.(group.id);
-        onClose();
-      } catch (error) {
-        Alert.alert('Error', 'No se pudo eliminar el grupo');
-      }
-    };
-
-    if (Platform.OS === 'web') {
-      if (window.confirm(`Seguro que quieres eliminar "${group.name}"? Esta accion no se puede deshacer.`)) {
-        await doDelete();
-      }
-    } else {
-      Alert.alert(
-        'Eliminar grupo',
-        `Seguro que quieres eliminar "${group.name}"? Esta accion no se puede deshacer.`,
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          { text: 'Eliminar', style: 'destructive', onPress: doDelete },
-        ]
-      );
+  const handleConfirmDelete = async () => {
+    if (!group) return;
+    setConfirmDeleteVisible(false);
+    try {
+      await groupsApi.delete(group.id);
+      onGroupDeleted?.(group.id);
+      onClose();
+    } catch (error) {
+      Alert.alert('Error', 'No se pudo eliminar el grupo');
     }
   };
 
@@ -327,6 +317,7 @@ export function GroupManageModal({
   };
 
   return (
+    <>
     <Modal
       visible={visible}
       transparent
@@ -354,6 +345,17 @@ export function GroupManageModal({
         </View>
       </TouchableOpacity>
     </Modal>
+    <ConfirmModal
+      visible={confirmDeleteVisible}
+      title="ELIMINAR GRUPO"
+      message={`Seguro que quieres eliminar "${group?.name}"? Esta accion no se puede deshacer.`}
+      confirmText="ELIMINAR"
+      cancelText="CANCELAR"
+      destructive
+      onConfirm={handleConfirmDelete}
+      onCancel={() => setConfirmDeleteVisible(false)}
+    />
+    </>
   );
 }
 
