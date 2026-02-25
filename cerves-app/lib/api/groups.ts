@@ -120,9 +120,21 @@ export const groupsApi = {
   },
 
   /**
-   * Delete a group
+   * Delete a group and remove all its members.
+   * Consumptions are preserved — only consumption_groups entries are cascade-deleted by the DB.
    */
   async delete(groupId: string): Promise<void> {
+    // Remove all members first (group_members may not have ON DELETE CASCADE)
+    const { error: membersError } = await supabase
+      .from('group_members')
+      .delete()
+      .eq('group_id', groupId);
+
+    if (membersError) {
+      console.error('Error removing group members:', membersError);
+      throw new Error('Failed to remove group members');
+    }
+
     const { error } = await supabase
       .from('groups')
       .delete()
