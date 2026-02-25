@@ -7,6 +7,7 @@ import { CategoryCard, Typography } from '@/components/ui';
 import { Theme } from '@/constants/Theme';
 
 const CATEGORIES = [
+  { id: 'ruleta', name: 'RULETA', icon: '🎡' },
   { id: 'cerveza', name: 'CERVEZA', icon: '🍺' },
   { id: 'vino', name: 'VINO', icon: '🍷' },
   { id: 'alta_graduación', name: 'ALTA GRADUACIÓN', icon: '🍸' },
@@ -16,7 +17,11 @@ export default function AddDrinkScreen() {
   const { player } = useAuth();
 
   const handleCategoryPress = (categoryId: string) => {
-    router.push(`/drinks/${categoryId}`);
+    if (categoryId === 'ruleta') {
+      router.push('/drinks/ruleta');
+    } else {
+      router.push(`/drinks/${categoryId}`);
+    }
   };
 
   return (
