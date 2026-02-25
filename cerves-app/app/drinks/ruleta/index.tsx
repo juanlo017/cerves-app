@@ -1,10 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   StyleSheet,
   View,
   ScrollView,
   TouchableOpacity,
+  Pressable,
   Text,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -25,17 +27,16 @@ const WHEEL_SIZE = 280;
 const CX = WHEEL_SIZE / 2;
 const CY = WHEEL_SIZE / 2;
 const RADIUS = WHEEL_SIZE / 2 - 3;
-const TEXT_RADIUS_RATIO = 0.65; // how far from center to place labels
-const MIN_ANGLE_FOR_TEXT = 15;  // degrees — skip label if slice is narrower
+const TEXT_RADIUS_RATIO = 0.65;
+const MIN_ANGLE_FOR_TEXT = 15;
 
 // ─── Categories ──────────────────────────────────────────────────────────────
 const WHEEL_CATEGORIES = [
-  { id: 'cerveza',       label: 'CERVEZA',       icon: '🍺', color: '#FFB300' },
-  { id: 'vino',          label: 'VINO',           icon: '🍷', color: '#9C27B0' },
+  { id: 'cerveza',         label: 'CERVEZA',     icon: '🍺', color: '#FFB300' },
+  { id: 'vino',            label: 'VINO',         icon: '🍷', color: '#9C27B0' },
   { id: 'alta_graduación', label: 'ALTA GRAD.',   icon: '🍸', color: '#00D4FF' },
 ];
 
-// Two shades per category so adjacent same-category slices are visually distinct
 const CATEGORY_COLOR_PAIRS: Record<string, [string, string]> = {
   cerveza:          ['#FFB300', '#E65100'],
   vino:             ['#9C27B0', '#6A1B9A'],
@@ -53,7 +54,6 @@ function sectorPath(
   cx: number, cy: number, r: number,
   startDeg: number, endDeg: number
 ): string {
-  // angles: 0 = top (12 o'clock), clockwise
   const startRad = ((startDeg - 90) * Math.PI) / 180;
   const endRad   = ((endDeg   - 90) * Math.PI) / 180;
   const x1 = cx + r * Math.cos(startRad);
@@ -74,13 +74,12 @@ function truncate(str: string, maxLen: number): string {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 export default function RuletaScreen() {
-  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(
-    new Set(['cerveza', 'vino', 'alta_graduación'])
-  );
-  const [drinks, setDrinks]           = useState<Drink[]>([]);
-  const [isSpinning, setIsSpinning]   = useState(false);
-  const [selectedDrink, setSelectedDrink] = useState<Drink | null>(null);
-  const [showResult, setShowResult]   = useState(false);
+  const [allDrinks, setAllDrinks]           = useState<Drink[]>([]);
+  const [excludedIds, setExcludedIds]       = useState<Set<string>>(new Set());
+  const [modalCatId, setModalCatId]         = useState<string | null>(null);
+  const [isSpinning, setIsSpinning]         = useState(false);
+  const [selectedDrink, setSelectedDrink]   = useState<Drink | null>(null);
+  const [showResult, setShowResult]         = useState(false);
 
   const rotation = useSharedValue(0);
 
@@ -88,26 +87,56 @@ export default function RuletaScreen() {
     transform: [{ rotate: `${rotation.value}deg` }],
   }));
 
-  // ── Load drinks for selected categories ──────────────────────────────────
-  const loadDrinks = useCallback(async () => {
-    if (selectedCategories.size === 0) { setDrinks([]); return; }
-    try {
-      const results = await Promise.all(
-        Array.from(selectedCategories).map((cat) => drinksApi.getByCategory(cat))
-      );
-      setDrinks(results.flat());
-    } catch {
-      setDrinks([]);
+  // ── Single API call on mount ──────────────────────────────────────────────
+  useEffect(() => {
+    drinksApi.getActive().then(setAllDrinks).catch(() => setAllDrinks([]));
+  }, []);
+
+  // ── Derived state ─────────────────────────────────────────────────────────
+  const drinksByCategory = useMemo(() => {
+    const map: Record<string, Drink[]> = {};
+    for (const d of allDrinks) {
+      if (!map[d.category]) map[d.category] = [];
+      map[d.category].push(d);
     }
-  }, [selectedCategories]);
+    return map;
+  }, [allDrinks]);
 
-  useEffect(() => { loadDrinks(); }, [loadDrinks]);
+  // Only the non-excluded drinks go on the wheel, shuffled so categories are interleaved
+  const wheelDrinks = useMemo(() => {
+    const arr = allDrinks.filter(d => !excludedIds.has(d.id));
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }, [allDrinks, excludedIds]);
 
-  // ── Toggle category ───────────────────────────────────────────────────────
-  const toggleCategory = (catId: string) => {
-    setSelectedCategories((prev) => {
+  const modalDrinks = modalCatId ? (drinksByCategory[modalCatId] ?? []) : [];
+
+  // ── Category pill helpers ─────────────────────────────────────────────────
+  const isCategoryActive = (catId: string) => {
+    const cat = drinksByCategory[catId] ?? [];
+    return cat.some(d => !excludedIds.has(d.id));
+  };
+
+  // ── Per-drink toggle ──────────────────────────────────────────────────────
+  const toggleDrink = (drinkId: string) => {
+    setExcludedIds(prev => {
       const next = new Set(prev);
-      next.has(catId) ? next.delete(catId) : next.add(catId);
+      next.has(drinkId) ? next.delete(drinkId) : next.add(drinkId);
+      return next;
+    });
+  };
+
+  // ── Global toggle inside modal ────────────────────────────────────────────
+  const toggleAllInCategory = () => {
+    if (!modalCatId) return;
+    const catDrinks = drinksByCategory[modalCatId] ?? [];
+    const allActive = catDrinks.every(d => !excludedIds.has(d.id));
+    setExcludedIds(prev => {
+      const next = new Set(prev);
+      catDrinks.forEach(d => allActive ? next.add(d.id) : next.delete(d.id));
       return next;
     });
   };
@@ -119,16 +148,15 @@ export default function RuletaScreen() {
   };
 
   const handleSpin = () => {
-    if (drinks.length === 0 || isSpinning) return;
+    if (wheelDrinks.length === 0 || isSpinning) return;
 
-    const N             = drinks.length;
-    const winnerIndex   = Math.floor(Math.random() * N);
-    const segmentAngle  = 360 / N;
-    // pointer is at top (0°); we want the mid-point of winning segment there
-    const targetOffset  = (winnerIndex + 0.5) * segmentAngle;
+    const N            = wheelDrinks.length;
+    const winnerIndex  = Math.floor(Math.random() * N);
+    const segmentAngle = 360 / N;
+    const targetOffset = (winnerIndex + 0.5) * segmentAngle;
     const totalRotation = rotation.value + 5 * 360 + (360 - targetOffset);
 
-    setSelectedDrink(drinks[winnerIndex]);
+    setSelectedDrink(wheelDrinks[winnerIndex]);
     setIsSpinning(true);
     setShowResult(false);
 
@@ -153,30 +181,24 @@ export default function RuletaScreen() {
 
   // ── Render SVG pie slices ─────────────────────────────────────────────────
   const renderSlices = () => {
-    const N = drinks.length;
+    const N = wheelDrinks.length;
     if (N === 0) return null;
     const sweepAngle = 360 / N;
 
-    return drinks.map((drink, i) => {
+    return wheelDrinks.map((drink, i) => {
       const startAngle = i * sweepAngle;
       const endAngle   = startAngle + sweepAngle;
+      const colorPair  = CATEGORY_COLOR_PAIRS[drink.category] ?? ['#00D4FF', '#0099CC'];
+      const fill       = colorPair[i % 2];
+      const path       = sectorPath(CX, CY, RADIUS, startAngle, endAngle);
 
-      const colorPair = CATEGORY_COLOR_PAIRS[drink.category] ?? ['#00D4FF', '#0099CC'];
-      const fill = colorPair[i % 2];
-
-      const path = sectorPath(CX, CY, RADIUS, startAngle, endAngle);
-
-      // Label: only when slice is wide enough
       const showText = sweepAngle >= MIN_ANGLE_FOR_TEXT;
-      const midAngle  = startAngle + sweepAngle / 2;
-      const midRad    = ((midAngle - 90) * Math.PI) / 180;
-      const textR     = RADIUS * TEXT_RADIUS_RATIO;
-      const textX     = CX + textR * Math.cos(midRad);
-      const textY     = CY + textR * Math.sin(midRad);
-      // rotate text to align radially (point outward)
-      const textRot   = midAngle;
-
-      const label = truncate(drink.name, 9);
+      const midAngle = startAngle + sweepAngle / 2;
+      const midRad   = ((midAngle - 90) * Math.PI) / 180;
+      const textR    = RADIUS * TEXT_RADIUS_RATIO;
+      const textX    = CX + textR * Math.cos(midRad);
+      const textY    = CY + textR * Math.sin(midRad);
+      const label    = truncate(drink.name, 9);
 
       return (
         <G key={drink.id}>
@@ -195,7 +217,7 @@ export default function RuletaScreen() {
               fontWeight="bold"
               textAnchor="middle"
               alignmentBaseline="middle"
-              transform={`rotate(${textRot}, ${textX.toFixed(2)}, ${textY.toFixed(2)})`}
+              transform={`rotate(${midAngle}, ${textX.toFixed(2)}, ${textY.toFixed(2)})`}
             >
               {label}
             </SvgText>
@@ -205,7 +227,10 @@ export default function RuletaScreen() {
     });
   };
 
-  const canSpin = drinks.length > 0 && !isSpinning;
+  const canSpin = wheelDrinks.length > 0 && !isSpinning;
+
+  // ── Modal: all-selected state ─────────────────────────────────────────────
+  const modalAllSelected = modalDrinks.length > 0 && modalDrinks.every(d => !excludedIds.has(d.id));
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -219,27 +244,40 @@ export default function RuletaScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* ── Category toggles ── */}
+        {/* ── Category pills ── */}
         <Card>
           <Typography variant="h3" align="center" style={{ marginBottom: Theme.spacing.md }}>
             CATEGORÍAS
           </Typography>
           <View style={styles.toggleRow}>
             {WHEEL_CATEGORIES.map((cat) => {
-              const isSelected = selectedCategories.has(cat.id);
+              const active = isCategoryActive(cat.id);
               return (
                 <TouchableOpacity
                   key={cat.id}
-                  style={[styles.toggleChip, isSelected && { backgroundColor: cat.color, borderColor: cat.color }]}
-                  onPress={() => toggleCategory(cat.id)}
+                  style={[
+                    styles.toggleChip,
+                    active && { backgroundColor: cat.color, borderColor: cat.color },
+                  ]}
+                  onPress={() => setModalCatId(cat.id)}
                 >
                   <Text style={styles.toggleIcon}>{cat.icon}</Text>
                   <Typography
                     variant="caption"
-                    style={isSelected ? styles.toggleTextSelected : styles.toggleText}
+                    style={active ? styles.toggleTextSelected : styles.toggleText}
                   >
                     {cat.label}
                   </Typography>
+                  {(() => {
+                    const catDrinks = drinksByCategory[cat.id] ?? [];
+                    const activeCount = catDrinks.filter(d => !excludedIds.has(d.id)).length;
+                    if (catDrinks.length === 0) return null;
+                    return (
+                      <Text style={[styles.badgeText, { color: active ? Theme.colors.background : cat.color }]}>
+                        {activeCount}/{catDrinks.length}
+                      </Text>
+                    );
+                  })()}
                 </TouchableOpacity>
               );
             })}
@@ -248,25 +286,20 @@ export default function RuletaScreen() {
 
         {/* ── Wheel ── */}
         <View style={styles.wheelWrapper}>
-          {/* Downward-pointing triangle pointer (▼) */}
           <View style={styles.pointer} />
-
-          {/* Rotating disc */}
           <Animated.View style={animatedStyle}>
             <Svg width={WHEEL_SIZE} height={WHEEL_SIZE}>
-              {drinks.length > 0 ? (
+              {wheelDrinks.length > 0 ? (
                 renderSlices()
               ) : (
                 <Circle cx={CX} cy={CY} r={RADIUS} fill={Theme.colors.backgroundCard} />
               )}
-              {/* Border ring */}
               <Circle
                 cx={CX} cy={CY} r={RADIUS}
                 fill="none"
                 stroke={Theme.colors.primary}
                 strokeWidth={3}
               />
-              {/* Center hub */}
               <Circle
                 cx={CX} cy={CY} r={13}
                 fill={Theme.colors.secondary}
@@ -284,9 +317,9 @@ export default function RuletaScreen() {
           color={Theme.colors.textSecondary}
           style={{ marginBottom: Theme.spacing.md }}
         >
-          {drinks.length > 0
-            ? `${drinks.length} bebida${drinks.length !== 1 ? 's' : ''} en el bombo`
-            : 'Selecciona al menos una categoría'}
+          {wheelDrinks.length > 0
+            ? `${wheelDrinks.length} bebida${wheelDrinks.length !== 1 ? 's' : ''} en el bombo`
+            : 'Selecciona al menos una bebida'}
         </Typography>
 
         {/* ── Spin button ── */}
@@ -300,6 +333,82 @@ export default function RuletaScreen() {
           </Typography>
         </TouchableOpacity>
       </ScrollView>
+
+      {/* ── Drink picker modal ── */}
+      <Modal
+        visible={modalCatId !== null}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setModalCatId(null)}
+      >
+        <Pressable style={styles.modalBackdrop} onPress={() => setModalCatId(null)}>
+          <Pressable style={styles.modalSheet} onPress={() => {}}>
+            {/* Modal header */}
+            <View style={styles.modalHeader}>
+              {(() => {
+                const cat = WHEEL_CATEGORIES.find(c => c.id === modalCatId);
+                return (
+                  <Typography variant="h3">
+                    {cat?.icon} {cat?.label}
+                  </Typography>
+                );
+              })()}
+              <TouchableOpacity onPress={() => setModalCatId(null)} style={styles.modalClose}>
+                <Typography variant="h2" style={styles.modalCloseText}>×</Typography>
+              </TouchableOpacity>
+            </View>
+
+            {/* Global toggle */}
+            <TouchableOpacity style={styles.globalToggle} onPress={toggleAllInCategory}>
+              <View style={[styles.checkbox, modalAllSelected && styles.checkboxChecked]}>
+                {modalAllSelected && <Text style={styles.checkmark}>✓</Text>}
+              </View>
+              <Typography variant="body" style={{ flex: 1 }}>
+                {modalAllSelected ? 'Deseleccionar todo' : 'Seleccionar todo'}
+              </Typography>
+            </TouchableOpacity>
+
+            <View style={styles.modalDivider} />
+
+            {/* Drink list */}
+            <ScrollView style={styles.drinkList} showsVerticalScrollIndicator={false}>
+              {modalDrinks.map(drink => {
+                const included = !excludedIds.has(drink.id);
+                return (
+                  <TouchableOpacity
+                    key={drink.id}
+                    style={styles.drinkRow}
+                    onPress={() => toggleDrink(drink.id)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.checkbox, included && styles.checkboxChecked]}>
+                      {included && <Text style={styles.checkmark}>✓</Text>}
+                    </View>
+                    <View style={styles.drinkInfo}>
+                      <Typography variant="body" style={!included ? styles.drinkTextOff : undefined}>
+                        {drink.name}
+                      </Typography>
+                      <Typography variant="caption" color={Theme.colors.textSecondary}>
+                        {drink.liters_per_unit.toFixed(2)}L · {drink.kcal_per_unit} kcal
+                      </Typography>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+              {modalDrinks.length === 0 && (
+                <Typography
+                  variant="body"
+                  align="center"
+                  color={Theme.colors.textSecondary}
+                  style={{ marginTop: Theme.spacing.xl }}
+                >
+                  No hay bebidas en esta categoría
+                </Typography>
+              )}
+            </ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       {/* ── Result overlay ── */}
       {showResult && selectedDrink && (
@@ -376,7 +485,7 @@ const styles = StyleSheet.create({
     paddingBottom: Theme.spacing.xxl,
   },
 
-  // Category toggles
+  // Category pills
   toggleRow: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -396,11 +505,15 @@ const styles = StyleSheet.create({
   toggleIcon: { fontSize: 20, marginBottom: 2 },
   toggleText:         { color: Theme.colors.textSecondary },
   toggleTextSelected: { color: Theme.colors.background },
-
+  badgeText: {
+    fontFamily: 'PressStart2P',
+    fontSize: 7,
+    marginTop: 3,
+  },
   // Wheel
   wheelWrapper: {
     alignItems: 'center',
-    paddingTop: 28,       // room so the pointer sits above the disc
+    paddingTop: 28,
     marginTop: Theme.spacing.md,
     marginBottom: Theme.spacing.xs,
     position: 'relative',
@@ -409,7 +522,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     zIndex: 10,
-    // ▼ downward-pointing triangle via border trick
     width: 0,
     height: 0,
     borderLeftWidth: 13,
@@ -433,6 +545,82 @@ const styles = StyleSheet.create({
     backgroundColor: Theme.colors.disabled,
     borderColor: Theme.colors.disabled,
   },
+
+  // Drink picker modal
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
+  },
+  modalSheet: {
+    backgroundColor: Theme.colors.backgroundLight,
+    borderTopLeftRadius: Theme.borderRadius.xl,
+    borderTopRightRadius: Theme.borderRadius.xl,
+    maxHeight: '75%',
+    paddingBottom: Theme.spacing.xl,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: Theme.spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: Theme.colors.border,
+  },
+  modalClose: {
+    padding: Theme.spacing.xs,
+    marginLeft: Theme.spacing.sm,
+  },
+  modalCloseText: {
+    color: '#FF4444',
+    fontSize: 32,
+    lineHeight: 32,
+  },
+  globalToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Theme.spacing.lg,
+    paddingVertical: Theme.spacing.md,
+    gap: Theme.spacing.md,
+  },
+  modalDivider: {
+    height: 1,
+    backgroundColor: Theme.colors.border,
+    marginHorizontal: Theme.spacing.lg,
+    marginBottom: Theme.spacing.xs,
+  },
+  drinkList: {
+    paddingHorizontal: Theme.spacing.lg,
+  },
+  drinkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Theme.spacing.sm,
+    gap: Theme.spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Theme.colors.border,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: Theme.colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Theme.colors.backgroundCard,
+  },
+  checkboxChecked: {
+    backgroundColor: Theme.colors.primary,
+    borderColor: Theme.colors.primary,
+  },
+  checkmark: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  drinkInfo: { flex: 1 },
+  drinkTextOff: { color: Theme.colors.textSecondary },
 
   // Result overlay
   overlay: {
@@ -461,7 +649,7 @@ const styles = StyleSheet.create({
     marginVertical: Theme.spacing.md,
     gap: Theme.spacing.lg,
   },
-  statItem:   { alignItems: 'center' },
+  statItem:    { alignItems: 'center' },
   statDivider: { width: 1, height: 32, backgroundColor: Theme.colors.border },
   addButton: {
     backgroundColor: Theme.colors.primary,
